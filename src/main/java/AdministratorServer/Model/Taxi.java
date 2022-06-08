@@ -17,7 +17,6 @@ public class Taxi {
     public Taxi() {
     }
 
-sss
     /*
     INITIALIZATION Taxi
         - batteryLevel = 100
@@ -28,6 +27,14 @@ sss
         this.portNumber = portNumber;
         this.addressServerAdministrator = addressServerAdministrator;
         this.batteryLevel = 100;
+    }
+
+    public Taxi(Integer id, Integer portNumber, String addressServerAdministrator, Integer batteryLevel, Position position) {
+        this.id = id;
+        this.portNumber = portNumber;
+        this.addressServerAdministrator = addressServerAdministrator;
+        this.batteryLevel = batteryLevel;
+        this.position = position;
     }
 
     public Integer getId() {

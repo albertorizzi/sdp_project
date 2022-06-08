@@ -18,16 +18,28 @@ AdministratorServer/StartServer.java
  AdministratorServer.StartServer
 AdministratorServer/services/UsersService.java
  AdministratorServer.services.UsersService
-Seta/TaxiProcess.java
- Seta.TaxiProcess
+AdministratorServer/Model/Position.java
+ AdministratorServer.Model.Position
 MQTT/PubExampleCallback.java
  MQTT.PubExampleCallback
  MQTT.PubExampleCallback$1
-AdministratorServer/Model/Position.java
- AdministratorServer.Model.Position
+Seta/TaxiIstance.java
+ Seta.TaxiIstance
 AdministratorServer/Model/Taxi.java
  AdministratorServer.Model.Taxi
 AdministratorServer/Model/Taxis.java
  AdministratorServer.Model.Taxis
 AdministratorServer/services/AdministratorServer.java
  AdministratorServer.services.AdministratorServer
+Pollution/Measurement.java
+ Pollution.Measurement
+Pollution/MeasuramentManager.java
+ Pollution.MeasuramentManager
+Pollution/Simulator.java
+ Pollution.Simulator
+Pollution/Buffer.java
+ Pollution.Buffer
+Pollution/PM10Simulator.java
+ Pollution.PM10Simulator
+Seta/TaxiProcess.java
+ Seta.TaxiProcess

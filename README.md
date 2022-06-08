@@ -1,4 +1,4 @@
-# Setup REST and MQTT
+# Setup AdministratorServer and MQTT
 
 
 
@@ -12,11 +12,11 @@ https://ewserver.di.unimi.it/gitlab/riccardopresotto/setup_rest_mqtt.git
 * If required, trust the project and accept the Gradle auto-import
 * Wait until the Gradle indexing process ends (it may take a few seconds)
 
-## REST
+## AdministratorServer
 
-* Run StartServer.java located in: *REST\_MQTT_example/src/main/java/REST/*
+* Run StartServer.java located in: *AdministratorServer\_MQTT_example/src/main/java/AdministratorServer/*
     * Don't worry about the red *INFO* console prints
-* Use a REST Client application (i.e., Advanced REST Client) to test if the server works correctly
+* Use a AdministratorServer Client application (i.e., Advanced AdministratorServer Client) to test if the server works correctly
 * For example you can run the following request:
 
 <img src = './assets/img_2.jpeg'>
@@ -31,4 +31,4 @@ https://ewserver.di.unimi.it/gitlab/riccardopresotto/setup_rest_mqtt.git
 	* **Windows**
 		- Run the file mosquitto.exe
 
-* Run SubExample.java and PubExample.java located in *REST\_MQTT_example/src/main/java/MQTT/*
+* Run SubExample.java and PubExample.java located in *AdministratorServer\_MQTT_example/src/main/java/MQTT/*

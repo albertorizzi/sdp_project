@@ -1,23 +1,33 @@
+AdministratorServer/Client/ClientExample.java
+ AdministratorServer.Client.ClientExample
 MQTT/SubExample.java
  MQTT.SubExample
  MQTT.SubExample$1
-REST/beans/User.java
- REST.beans.User
-REST/services/HelloWorld.java
- REST.services.HelloWorld
+AdministratorServer/Model/User.java
+ AdministratorServer.Model.User
+AdministratorServer/Model/Users.java
+ AdministratorServer.Model.Users
+AdministratorServer/services/HelloWorld.java
+ AdministratorServer.services.HelloWorld
 MQTT/PubSubExample.java
  MQTT.PubSubExample
  MQTT.PubSubExample$1
-REST/StartServer.java
- REST.StartServer
+MQTT/PubExample.java
+ MQTT.PubExample
+AdministratorServer/StartServer.java
+ AdministratorServer.StartServer
+AdministratorServer/services/UsersService.java
+ AdministratorServer.services.UsersService
+Seta/TaxiProcess.java
+ Seta.TaxiProcess
 MQTT/PubExampleCallback.java
  MQTT.PubExampleCallback
  MQTT.PubExampleCallback$1
-MQTT/PubExample.java
- MQTT.PubExample
-REST/services/UsersService.java
- REST.services.UsersService
-REST/beans/Users.java
- REST.beans.Users
-REST/Client/ClientExample.java
- REST.Client.ClientExample
+AdministratorServer/Model/Position.java
+ AdministratorServer.Model.Position
+AdministratorServer/Model/Taxi.java
+ AdministratorServer.Model.Taxi
+AdministratorServer/Model/Taxis.java
+ AdministratorServer.Model.Taxis
+AdministratorServer/services/AdministratorServer.java
+ AdministratorServer.services.AdministratorServer

@@ -1,8 +1,8 @@
-package REST.services;
+package AdministratorServer.services;
 
 
-import REST.beans.User;
-import REST.beans.Users;
+import AdministratorServer.Model.User;
+import AdministratorServer.Model.Users;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

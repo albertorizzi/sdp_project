@@ -1,7 +1,7 @@
-package REST.Client;
+package AdministratorServer.Client;
 
-import REST.beans.User;
-import REST.beans.Users;
+import AdministratorServer.Model.User;
+import AdministratorServer.Model.Users;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;

@@ -84,9 +84,7 @@ public class TaxiProcess {
         } // for
         System.out.println("🚖 taxiList: " + TaxiIstance.getInstance().getTaxiList());
 
-        // TODO: cambiare commenti. Quando l‘inserimento del drone nella smart-city va a buon fine,
-        // esso dovrà avviare il proprio sensore per il rilevamento dell’inquinamento dell’aria.
-        startPollutionSensors(); // 3.1 AVVIO SENSORE INQUINAMENTO
+        startPollutionSensors(); // startPollutionSendor
     }
 
 
@@ -97,12 +95,10 @@ public class TaxiProcess {
         PM10Simulator pm10Simulator = new PM10Simulator(buffer);
         pm10Simulator.start();
 
-        // consumatore
-
-
+        // consumatore pollution
         ArrayList<Measurement> measurementList = new ArrayList<>(); // lista delle misurazioni
-        //ArrayList<Measurement> averageList = new ArrayList<>(); // lista delle medie delle misurazioni
-        new Thread(() -> { // lamba expression
+        ArrayList<Measurement> averageList = new ArrayList<>(); // lista delle medie delle misurazioni
+        new Thread(() -> {
             while (true) {
 
                 measurementList.addAll(buffer.readAllAndClean());
@@ -110,15 +106,14 @@ public class TaxiProcess {
                 long timestamp = 0;
                 int measurementId = 0;
                 for (Measurement m : measurementList) {
-                    //System.out.println("m: " + m.getValue()); // debug
                     sum += m.getValue();
                     timestamp = m.getTimestamp();
                 }
-                TaxiIstance.getInstance().addAverageList(
+                TaxiIstance.getInstance().addAverageListPollutionMeasure(
                         new Measurement("pm10-" + measurementId++, "PM10", sum / 8, timestamp)
                 );
-                measurementList.clear(); //sum = 0;
-                //System.out.println("averageList: " + averageList); // debug
+                measurementList.clear(); // clear list of measurement
+                System.out.println("averageList: " + averageList);
 
             }
         }).start();

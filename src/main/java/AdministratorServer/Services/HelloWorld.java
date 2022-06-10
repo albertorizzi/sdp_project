@@ -1,4 +1,4 @@
-package AdministratorServer.services;
+package AdministratorServer.Services;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

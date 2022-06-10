@@ -7,8 +7,8 @@ AdministratorServer/Model/User.java
  AdministratorServer.Model.User
 AdministratorServer/Model/Users.java
  AdministratorServer.Model.Users
-AdministratorServer/services/HelloWorld.java
- AdministratorServer.services.HelloWorld
+Pollution/Simulator.java
+ Pollution.Simulator
 MQTT/PubSubExample.java
  MQTT.PubSubExample
  MQTT.PubSubExample$1
@@ -16,30 +16,36 @@ MQTT/PubExample.java
  MQTT.PubExample
 AdministratorServer/StartServer.java
  AdministratorServer.StartServer
-AdministratorServer/services/UsersService.java
- AdministratorServer.services.UsersService
-AdministratorServer/Model/Position.java
- AdministratorServer.Model.Position
+Pollution/Buffer.java
+ Pollution.Buffer
+Pollution/MeasuramentManager.java
+ Pollution.MeasuramentManager
 MQTT/PubExampleCallback.java
  MQTT.PubExampleCallback
  MQTT.PubExampleCallback$1
-Seta/TaxiIstance.java
- Seta.TaxiIstance
-AdministratorServer/Model/Taxi.java
- AdministratorServer.Model.Taxi
-AdministratorServer/Model/Taxis.java
- AdministratorServer.Model.Taxis
-AdministratorServer/services/AdministratorServer.java
- AdministratorServer.services.AdministratorServer
 Pollution/Measurement.java
  Pollution.Measurement
-Pollution/MeasuramentManager.java
- Pollution.MeasuramentManager
-Pollution/Simulator.java
- Pollution.Simulator
-Pollution/Buffer.java
- Pollution.Buffer
 Pollution/PM10Simulator.java
  Pollution.PM10Simulator
+AdministratorServer/Services/HelloWorld.java
+ AdministratorServer.Services.HelloWorld
+Seta/TaxiIstance.java
+ Seta.TaxiIstance
+Seta/RideGenerator.java
+ Seta.RideGenerator
+AdministratorServer/Model/Taxi.java
+ AdministratorServer.Model.Taxi
+AdministratorServer/Services/AdministratorServer.java
+ AdministratorServer.Services.AdministratorServer
+AdministratorServer/Model/Ride.java
+ AdministratorServer.Model.Ride
+AdministratorServer/Model/Position.java
+ AdministratorServer.Model.Position
+Seta/SetaPublisher.java
+ Seta.SetaPublisher
+AdministratorServer/Model/Taxis.java
+ AdministratorServer.Model.Taxis
 Seta/TaxiProcess.java
  Seta.TaxiProcess
+AdministratorServer/Services/UsersService.java
+ AdministratorServer.Services.UsersService

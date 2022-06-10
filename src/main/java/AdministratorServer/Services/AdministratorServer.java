@@ -1,4 +1,4 @@
-package AdministratorServer.services;
+package AdministratorServer.Services;
 
 
 import AdministratorServer.Model.Taxi;
@@ -6,7 +6,6 @@ import AdministratorServer.Model.Taxis;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 
 @Path("taxi")

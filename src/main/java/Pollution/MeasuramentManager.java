@@ -10,10 +10,10 @@ public class MeasuramentManager implements Buffer{
     // produttore
     @Override
     public synchronized void addMeasurement(Measurement m) {
-        //System.out.println("Produttore - Insert " + m); // debug
+        //System.out.println("Produttore - Insert " + m);
         buffer.add(m);
         if (buffer.size() == 8){
-            //System.out.println("Produttore - Notify"); // debug
+            //System.out.println("Produttore - Notify");
             this.notify();
         }
     }
@@ -21,12 +21,12 @@ public class MeasuramentManager implements Buffer{
     // consumatore
     @Override
     public synchronized ArrayList<Measurement> readAllAndClean() {
-        // System.out.println("Consumatore - Starting..."); // debug
+        // System.out.println("Consumatore - Starting...");
         ArrayList<Measurement> measurementsCopy = new ArrayList<>();
 
         while(buffer.size() < 8) {
             try {
-                //System.out.println("Consumatore - Wait"); // debug
+                //System.out.println("Consumatore - Wait");
                 this.wait();
             } catch (InterruptedException e) { e.printStackTrace(); }
         }

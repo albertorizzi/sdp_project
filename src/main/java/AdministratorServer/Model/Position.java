@@ -31,6 +31,25 @@ public class Position {
         this.y = y;
     }
 
+    public int getDistrictByPosition() {
+        int x = this.getX();
+        int y = this.getY();
+
+        if (x <= 4) { // D1 o D4
+            if (y <= 4) {
+                return 1;
+            } else {
+                return 4;
+            }
+        } else {
+            if (y <= 4) {
+                return 2;
+            } else {
+                return 3;
+            }
+        }
+    }
+
     @Override
     public String toString() {
         return "Position{" +

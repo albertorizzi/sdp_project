@@ -1,4 +1,4 @@
-package AdministratorServer.services;
+package AdministratorServer.Services;
 
 
 import AdministratorServer.Model.User;

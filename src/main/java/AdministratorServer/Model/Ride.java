@@ -1,16 +1,20 @@
 package AdministratorServer.Model;
 
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
 public class Ride {
-    private Integer IDRide;
+    private int IDRide;
     private Position startPosition;
     private Position destinationPosition;
     private int actualDistrict;
 
-    public Ride(Integer IDRide, Position startPosition, Position destinationPosition, int actualDistrict) {
+    public Ride(int IDRide, Position startPosition, Position destinationPosition) {
         this.IDRide = IDRide;
         this.startPosition = startPosition;
         this.destinationPosition = destinationPosition;
-        this.actualDistrict = actualDistrict;
+        this.actualDistrict = startPosition.getDistrictByPosition();
     }
 
     public Integer getIDRide() {
@@ -53,5 +57,11 @@ public class Ride {
                 ", startPosition=" + startPosition +
                 ", destinationPosition=" + destinationPosition +
                 '}';
+    }
+
+    public String toJsonString() {
+        return "{\"ride\":{\"id\":\"" + IDRide + "\",\"" +
+                "startPosition\":{\"x\":\"" + startPosition.getX() + "\",\"y\":\"" + startPosition.getY() + "\"}," +
+                "\"destinationPosition\":{\"x\":\"" + destinationPosition.getX() + "\",\"y\":\"" + destinationPosition.getY() + "\"}}}";
     }
 }

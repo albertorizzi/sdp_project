@@ -1,0 +1,34 @@
+syntax = "proto3";
+package com.example.taxis;
+
+// 🤝 GREETING
+message HelloRequest {
+  int32 id = 1;
+  int32 port = 2;
+  string ip = 3;
+  Position position = 4;
+  int32 batteryLevel = 5;
+}
+message HelloResponse {
+  int32 id = 1;
+}
+
+message Position{
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message RideElectionRequest {
+  int32 idRide = 1;
+  int32 idTaxi = 2;
+}
+
+message RideElectionResponse {
+  int32 idRide = 1;
+  int32 idTaxi = 2;
+}
+
+service GrpcService {
+  rpc greeting(HelloRequest) returns (HelloResponse);
+  rpc election(RideElectionRequest) returns (RideElectionResponse);
+}

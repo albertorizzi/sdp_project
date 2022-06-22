@@ -1,15 +1,15 @@
 package AdministratorServer.Services;
 
-
 import AdministratorServer.Model.Taxi;
 import AdministratorServer.Model.Taxis;
-
+import com.google.gson.Gson;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
-
 @Path("taxi")
 public class AdministratorServer {
+
+    // GET - http://localhost:1337/taxi
     @GET
     @Produces("application/json")
     public Response mainTaxiService() {
@@ -17,6 +17,18 @@ public class AdministratorServer {
         return Response.status(Response.Status.OK).entity(string).build();
     }
 
+    // GET - http://localhost:1337/taxi/all
+    @Path("all")
+    @GET
+    @Produces({"application/json", "application/xml"})
+    public Response getTaxisList() {
+        Gson gson = new Gson();
+        Taxis taxis = Taxis.getInstance();
+        System.out.println(taxis);
+        return Response.status(Response.Status.OK).entity(gson.toJson(taxis)).build();
+    }
+
+    // POST - http://localhost:1337/taxi/add
     @Path("add")
     @POST
     @Consumes({"application/json", "application/xml"})
@@ -42,9 +54,5 @@ public class AdministratorServer {
             Taxis.getInstance().add(taxi);
             return Response.status(Response.Status.OK).entity(Taxis.getInstance().getTaxisList()).build();
         }
-
-
     }
-
-
 }

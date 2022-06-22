@@ -27,8 +27,6 @@ public class PM10Simulator extends Simulator {
             double pm10 = getPM10Value(i);
             addMeasurement(pm10);
 
-            System.out.println(pm10);
-
             waitingTime = 200 + (int)(Math.random()*200);
             sensorSleep(waitingTime);
 

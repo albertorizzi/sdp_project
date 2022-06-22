@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id "com.google.protobuf" version "0.8.10"// for GRPC
     id "war" // for REST
 }
 
@@ -42,13 +43,45 @@ dependencies {
     // https://mvnrepository.com/artifact/com.sun.jersey/jersey-server
     compile group: 'com.sun.jersey', name: 'jersey-server', version: '1.2'
 
-
-
     // MQTT Dependencies
     // https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3
     compile group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.5'
+
+    // GRPC Dependencies
+    // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.10.0'
+
+    // https://mvnrepository.com/artifact/io.grpc/grpc-all
+    compile group: 'io.grpc', name: 'grpc-all', version: '1.25.0'
 }
 
+// GRPC
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.10.1'
+    }
+
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.25.0'
+        }
+    }
+
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
 
 test {
     useJUnitPlatform()

@@ -1,11 +1,43 @@
 AdministratorServer/Client/ClientExample.java
  AdministratorServer.Client.ClientExample
-Seta/TaxiIstance.java
- Seta.TaxiIstance
-AdministratorServer/Model/Taxi.java
- AdministratorServer.Model.Taxi
-AdministratorServer/Services/AdministratorServer.java
- AdministratorServer.Services.AdministratorServer
+Pollution/MeasuramentManager.java
+ Pollution.MeasuramentManager
+com/example/taxis/GrpcServiceOuterClass.java
+ com.example.taxis.GrpcServiceOuterClass
+ com.example.taxis.GrpcServiceOuterClass$1
+ com.example.taxis.GrpcServiceOuterClass$HelloRequest
+ com.example.taxis.GrpcServiceOuterClass$HelloRequest$1
+ com.example.taxis.GrpcServiceOuterClass$HelloRequest$Builder
+ com.example.taxis.GrpcServiceOuterClass$HelloRequestOrBuilder
+ com.example.taxis.GrpcServiceOuterClass$HelloResponse
+ com.example.taxis.GrpcServiceOuterClass$HelloResponse$1
+ com.example.taxis.GrpcServiceOuterClass$HelloResponse$Builder
+ com.example.taxis.GrpcServiceOuterClass$HelloResponseOrBuilder
+ com.example.taxis.GrpcServiceOuterClass$Position
+ com.example.taxis.GrpcServiceOuterClass$Position$1
+ com.example.taxis.GrpcServiceOuterClass$Position$Builder
+ com.example.taxis.GrpcServiceOuterClass$PositionOrBuilder
+ com.example.taxis.GrpcServiceOuterClass$RideElectionRequest
+ com.example.taxis.GrpcServiceOuterClass$RideElectionRequest$1
+ com.example.taxis.GrpcServiceOuterClass$RideElectionRequest$Builder
+ com.example.taxis.GrpcServiceOuterClass$RideElectionRequestOrBuilder
+ com.example.taxis.GrpcServiceOuterClass$RideElectionResponse
+ com.example.taxis.GrpcServiceOuterClass$RideElectionResponse$1
+ com.example.taxis.GrpcServiceOuterClass$RideElectionResponse$Builder
+ com.example.taxis.GrpcServiceOuterClass$RideElectionResponseOrBuilder
+com/example/taxis/GrpcServiceGrpc.java
+ com.example.taxis.GrpcServiceGrpc
+ com.example.taxis.GrpcServiceGrpc$1
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceBaseDescriptorSupplier
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceBlockingStub
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceFileDescriptorSupplier
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceFutureStub
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceImplBase
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceMethodDescriptorSupplier
+ com.example.taxis.GrpcServiceGrpc$GrpcServiceStub
+ com.example.taxis.GrpcServiceGrpc$MethodHandlers
+Pollution/Simulator.java
+ Pollution.Simulator
 Pollution/Buffer.java
  Pollution.Buffer
 Pollution/PM10Simulator.java
@@ -14,38 +46,32 @@ AdministratorServer/Model/User.java
  AdministratorServer.Model.User
 AdministratorServer/Model/Users.java
  AdministratorServer.Model.Users
-AdministratorServer/Model/Ride.java
- AdministratorServer.Model.Ride
-AdministratorServer/Model/Position.java
- AdministratorServer.Model.Position
 Seta/SetaPublisher.java
  Seta.SetaPublisher
-AdministratorServer/Model/Taxis.java
- AdministratorServer.Model.Taxis
-MQTT/PubExample.java
- MQTT.PubExample
-AdministratorServer/Services/UsersService.java
- AdministratorServer.Services.UsersService
-AdministratorServer/Services/HelloWorld.java
- AdministratorServer.Services.HelloWorld
-Pollution/Measurement.java
- Pollution.Measurement
-Pollution/MeasuramentManager.java
- Pollution.MeasuramentManager
-Seta/RideGenerator.java
- Seta.RideGenerator
+AdministratorServer/Model/Position.java
+ AdministratorServer.Model.Position
+AdministratorServer/Model/Ride.java
+ AdministratorServer.Model.Ride
 AdministratorServer/StartServer.java
  AdministratorServer.StartServer
-Pollution/Simulator.java
- Pollution.Simulator
+AdministratorServer/Model/Taxis.java
+ AdministratorServer.Model.Taxis
+Pollution/Measurement.java
+ Pollution.Measurement
+Seta/TaxiIstance.java
+ Seta.TaxiIstance
+AdministratorServer/Client/AdministratorClient.java
+ AdministratorServer.Client.AdministratorClient
+AdministratorServer/Model/Taxi.java
+ AdministratorServer.Model.Taxi
+AdministratorServer/Services/AdministratorServer.java
+ AdministratorServer.Services.AdministratorServer
+Seta/RideGenerator.java
+ Seta.RideGenerator
+Seta/TaxiSubscriber.java
+ Seta.TaxiSubscriber
+ Seta.TaxiSubscriber$1
 Seta/TaxiProcess.java
  Seta.TaxiProcess
-MQTT/SubExample.java
- MQTT.SubExample
- MQTT.SubExample$1
-MQTT/PubExampleCallback.java
- MQTT.PubExampleCallback
- MQTT.PubExampleCallback$1
-MQTT/PubSubExample.java
- MQTT.PubSubExample
- MQTT.PubSubExample$1
+Seta/GrpcServiceImpl.java
+ Seta.GrpcServiceImpl

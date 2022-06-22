@@ -1,34 +1,3 @@
-# Setup AdministratorServer and MQTT
+# SETA project - Alberto Rizzi
 
-
-
-* You can import the project directly from a *Version Control System*, by providing the following URL: 
-https://ewserver.di.unimi.it/gitlab/riccardopresotto/setup_rest_mqtt.git
-
-<img src = './assets/img_1.png'>
-
-
-* Otherwise, take care to import the project as a Gradle Project
-* If required, trust the project and accept the Gradle auto-import
-* Wait until the Gradle indexing process ends (it may take a few seconds)
-
-## AdministratorServer
-
-* Run StartServer.java located in: *AdministratorServer\_MQTT_example/src/main/java/AdministratorServer/*
-    * Don't worry about the red *INFO* console prints
-* Use a AdministratorServer Client application (i.e., Advanced AdministratorServer Client) to test if the server works correctly
-* For example you can run the following request:
-
-<img src = './assets/img_2.jpeg'>
-
-
-## MQTT
-* Dowload and install the Mosquitto broker from here: *https://mosquitto.org/download/*
-* Run the Mosquitto broker:
-	* **MacOS**
-		- brew services start mosquitto
-		- mosquitto_sub -h localhost -v -t ‘#’  *(Instead ‘#’ specify the topics of interest)*
-	* **Windows**
-		- Run the file mosquitto.exe
-
-* Run SubExample.java and PubExample.java located in *AdministratorServer\_MQTT_example/src/main/java/MQTT/*
+The goal of the project is to develop SETA (SElf-driving TAxi service), a peer-to-peer system of self-driving taxis for the citizens of a smart city.

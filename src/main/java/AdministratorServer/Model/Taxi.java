@@ -12,6 +12,8 @@ public class Taxi {
     private Integer batteryLevel;
     private Position position;
     private List<Taxi> listTaxiKnowed;
+    private boolean inCharge = false;
+    private boolean inRide = false;
 
     // empty constructor
     public Taxi() {
@@ -75,6 +77,22 @@ public class Taxi {
 
     public Position getPosition() {
         return position;
+    }
+
+    public boolean isInCharge() {
+        return inCharge;
+    }
+
+    public void setInCharge(boolean inCharge) {
+        this.inCharge = inCharge;
+    }
+
+    public boolean isInRide() {
+        return inRide;
+    }
+
+    public void setInRide(boolean inRide) {
+        this.inRide = inRide;
     }
 
     public List<Taxi> getListTaxiKnowed() {

@@ -1,5 +1,6 @@
 package Seta;
 
+import AdministratorServer.Model.Position;
 import AdministratorServer.Model.Taxi;
 import Pollution.Measurement;
 
@@ -59,5 +60,19 @@ public class TaxiIstance {
         Taxi myTaxi = taxiList.stream().filter(t ->
                 t.getId() == idCurrentTaxi).findFirst().orElse(null);
         return myTaxi;
+    }
+
+    public Position getPositionOfTaxi(int taxiId) {
+        Taxi taxi = taxiList.stream().filter(t ->
+                t.getId() == taxiId).findFirst().orElse(null);
+        return taxi.getPosition();
+    }
+
+    public void updateSingleTaxi(int taxiId, Position position, int batteryLevel) {
+        Taxi taxi = taxiList.stream().filter(t ->
+                t.getId() == taxiId).findFirst().orElse(null);
+
+        taxi.setPosition(position);
+        taxi.setBatteryLevel(batteryLevel);
     }
 }

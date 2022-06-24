@@ -2,6 +2,7 @@ package Seta;
 
 import AdministratorServer.Model.Position;
 import AdministratorServer.Model.Ride;
+import AdministratorServer.Model.Rides;
 import com.google.gson.Gson;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -34,9 +35,9 @@ public class RideGenerator extends Thread {
     public void run() {
         super.run();
 
-        System.out.println("Thread RideGenerartor started...");
+        System.out.println("✅ RideGenerartor Thread started...");
 
-        // MqqtConnection
+        // MqqtConnection RideGenerator
         try {
             client = new MqttClient(broker, clientId);
             MqttConnectOptions connOpts = new MqttConnectOptions();
@@ -51,39 +52,43 @@ public class RideGenerator extends Thread {
         }
 
         // Ride Generator
-        // every 5 seconds generate one ride starting at random position
+        // every 5 seconds generate 2 rides starting at random position
+        // TODO: cambiare in 2
 
         while (true) {
-            idRide++;
+            idRide++; // idRide incremental
             try {
-                // TODO: generare 2 richieste
-                System.out.println("\n" + clientId + " Order #" + idRide);
+                System.out.println("\n" + "Ride #" + idRide);
 
                 int id = idRide;
                 int min = 0, max = 9;
-                startPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
-                endPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
 
-                // TODO: check if actual position isn't equal to endPosition
+                startPosition = null;
+                endPosition = null;
+
+                while (startPosition == endPosition) {
+                    startPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
+                    endPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
+                }
 
                 actualDistrict = startPosition.getDistrictByPosition();
                 ride = new Ride(id, startPosition, endPosition);
-                String payload = ride.toJsonString();
 
-                //topic = topic + actualDistrict;
+                // add ride to RidesQueue
+                Rides.getInstance().add(ride);
+
+                // send ride to Mqqt to Topic district
+                String payload = ride.toJsonString();
 
                 MqttMessage message = new MqttMessage(payload.getBytes()); // getBytes converte il msg in binario
                 message.setQos(qos);
-                System.out.println(clientId + " Publishing message: " + payload.toString());
-                System.out.println("Topic: " + topic + actualDistrict);
+                // System.out.println(clientId + " Publishing message: " + payload.toString());
+                // System.out.println("Topic: " + topic + actualDistrict);
+                System.out.println("🗺 POSITION: start -> " + actualDistrict + ", destination -> " + ride.getDestinationPosition().getDistrictByPosition());
                 client.publish(topic + actualDistrict, message);
-                System.out.println(clientId + " Message published");
 
-                Thread.sleep(2500); //TODO: cambiar ein 5000
-
-            } catch (MqttException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
+                Thread.sleep(5000);
+            } catch (MqttException | InterruptedException e) {
                 e.printStackTrace();
             }
         }

@@ -99,8 +99,10 @@ public class TaxiProcess {
         System.out.println("🚖 taxiList: " + TaxiIstance.getInstance().getTaxiList());
 
         startPollutionSensors(); // startPollutionSendor
-        TaxiSubscriber taxiSubscriber = new TaxiSubscriber(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
-        taxiSubscriber.start();
+
+        // taxi si iscrive alle richieste di ride
+        TaxiPubSub taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
+        taxiPubSub.start();
     }
 
 

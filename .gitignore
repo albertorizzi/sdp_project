@@ -2,3 +2,5 @@
 .idea
 .*
 !.gitignore
+gradle
+build

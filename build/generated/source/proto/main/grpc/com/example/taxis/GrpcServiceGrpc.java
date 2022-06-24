@@ -89,6 +89,37 @@ public final class GrpcServiceGrpc {
     return getElectionMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest,
+      com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> getNotifyTaxisAfterRideMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "notifyTaxisAfterRide",
+      requestType = com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest.class,
+      responseType = com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest,
+      com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> getNotifyTaxisAfterRideMethod() {
+    io.grpc.MethodDescriptor<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest, com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> getNotifyTaxisAfterRideMethod;
+    if ((getNotifyTaxisAfterRideMethod = GrpcServiceGrpc.getNotifyTaxisAfterRideMethod) == null) {
+      synchronized (GrpcServiceGrpc.class) {
+        if ((getNotifyTaxisAfterRideMethod = GrpcServiceGrpc.getNotifyTaxisAfterRideMethod) == null) {
+          GrpcServiceGrpc.getNotifyTaxisAfterRideMethod = getNotifyTaxisAfterRideMethod =
+              io.grpc.MethodDescriptor.<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest, com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "notifyTaxisAfterRide"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new GrpcServiceMethodDescriptorSupplier("notifyTaxisAfterRide"))
+              .build();
+        }
+      }
+    }
+    return getNotifyTaxisAfterRideMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -130,6 +161,13 @@ public final class GrpcServiceGrpc {
       asyncUnimplementedUnaryCall(getElectionMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void notifyTaxisAfterRide(com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest request,
+        io.grpc.stub.StreamObserver<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getNotifyTaxisAfterRideMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -146,6 +184,13 @@ public final class GrpcServiceGrpc {
                 com.example.taxis.GrpcServiceOuterClass.RideElectionRequest,
                 com.example.taxis.GrpcServiceOuterClass.RideElectionResponse>(
                   this, METHODID_ELECTION)))
+          .addMethod(
+            getNotifyTaxisAfterRideMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest,
+                com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse>(
+                  this, METHODID_NOTIFY_TAXIS_AFTER_RIDE)))
           .build();
     }
   }
@@ -183,6 +228,14 @@ public final class GrpcServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(getElectionMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void notifyTaxisAfterRide(com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest request,
+        io.grpc.stub.StreamObserver<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getNotifyTaxisAfterRideMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -215,6 +268,13 @@ public final class GrpcServiceGrpc {
     public com.example.taxis.GrpcServiceOuterClass.RideElectionResponse election(com.example.taxis.GrpcServiceOuterClass.RideElectionRequest request) {
       return blockingUnaryCall(
           getChannel(), getElectionMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse notifyTaxisAfterRide(com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getNotifyTaxisAfterRideMethod(), getCallOptions(), request);
     }
   }
 
@@ -251,10 +311,19 @@ public final class GrpcServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(getElectionMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse> notifyTaxisAfterRide(
+        com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getNotifyTaxisAfterRideMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_GREETING = 0;
   private static final int METHODID_ELECTION = 1;
+  private static final int METHODID_NOTIFY_TAXIS_AFTER_RIDE = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -280,6 +349,10 @@ public final class GrpcServiceGrpc {
         case METHODID_ELECTION:
           serviceImpl.election((com.example.taxis.GrpcServiceOuterClass.RideElectionRequest) request,
               (io.grpc.stub.StreamObserver<com.example.taxis.GrpcServiceOuterClass.RideElectionResponse>) responseObserver);
+          break;
+        case METHODID_NOTIFY_TAXIS_AFTER_RIDE:
+          serviceImpl.notifyTaxisAfterRide((com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideRequest) request,
+              (io.grpc.stub.StreamObserver<com.example.taxis.GrpcServiceOuterClass.TaxiInfoAfterRideResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -344,6 +417,7 @@ public final class GrpcServiceGrpc {
               .setSchemaDescriptor(new GrpcServiceFileDescriptorSupplier())
               .addMethod(getGreetingMethod())
               .addMethod(getElectionMethod())
+              .addMethod(getNotifyTaxisAfterRideMethod())
               .build();
         }
       }

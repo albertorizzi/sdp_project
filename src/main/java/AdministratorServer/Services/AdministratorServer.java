@@ -32,7 +32,7 @@ public class AdministratorServer {
     @Path("add")
     @POST
     @Consumes({"application/json", "application/xml"})
-    @Produces({"application/json"})
+    @Produces("application/json")
     public Response addTaxi(Taxi taxi) {
         /*
         When a taxi requests to join the network, the Administrator Server:
@@ -42,17 +42,32 @@ public class AdministratorServer {
                 • The position of the recharge station of a randomly chosen district
                 • The list of taxis already registered in the smart-city
          */
-
+        System.out.println(taxi);
         boolean taxiInList = Taxis.getInstance().checkTaxiIsAlreadyPresent(taxi);
-
-        System.out.println(taxiInList);
 
         if (taxiInList) {
             String message = "{\"message\": \"TAXI with ID=" + taxi.getId() + " already exist.\"}";
             return Response.status(Response.Status.CONFLICT).entity(message).build();
         } else {
             Taxis.getInstance().add(taxi);
-            return Response.status(Response.Status.OK).entity(Taxis.getInstance().getTaxisList()).build();
+           return Response.status(Response.Status.OK).entity(Taxis.getInstance().getTaxisList()).build();
+         //   return Response.ok(Taxis.getInstance().getTaxisList()).build();
+
+
         }
     }
+
+
+    // http://localhost:1337/taxi/remove/1
+    @Path("remove/{id}")
+    @DELETE
+    @Produces("text/plain")
+    public Response removeDrone(@PathParam("id") int idTaxi){
+        if (Taxis.getInstance().remove(idTaxi)) {
+            return Response.ok("✅ Taxi removed successfully!").build();
+        } else  {
+            return Response.status(Response.Status.NOT_FOUND).entity("Taxi" + idTaxi + " doesn't exist.").build();
+        }
+    }
+
 }

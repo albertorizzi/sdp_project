@@ -42,6 +42,13 @@ public class TaxiIstance {
         }
     }
 
+    // remove taxi from list
+    public void removeTaxi(Taxi taxi) {
+        synchronized (taxiList) {
+            taxiList.remove(taxi);
+        }
+    }
+
     public void addAverageListPollutionMeasure(Measurement pm10) {
         synchronized (averageListPollutionMeasurements) {
             averageListPollutionMeasurements.add(pm10);

@@ -44,7 +44,7 @@ public class TaxiPubSub extends Thread {
     }
 
     public void run() {
-        System.out.println("🚚 Starting Broker MQTT...");
+        System.out.println("🚚 TaxiPubSub - Starting Broker MQTT...");
 
         String clientId = MqttClient.generateClientId();
         int qos = 2;
@@ -84,7 +84,7 @@ public class TaxiPubSub extends Thread {
                     );
 
                     Ride ride = new Ride(idRide, startPosition, destinationPosition);
-                    System.out.println("📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
+                    System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
                     // check if I'm riding or I'm busy in a ride
                     // TODO: add check if I would to recharge battery
@@ -120,33 +120,27 @@ public class TaxiPubSub extends Thread {
                                                 .setIdRide(ride.getIDRide())
                                                 .setStartPositionRide(position)
                                                 .build();
-                                        System.out.println("[GRPC CLIENT] request: " + request);
 
                                         GrpcServiceOuterClass.RideElectionResponse response;
                                         try {
                                             response = stub.election(request);
-                                            //System.out.println("[GRPC CLIENT] response frome drone " + drone.getId() + ": " + response.getId());
-                                            System.out.println(response);
-
 
                                             if (response.getMessageElection().equals("OK")) {
                                                 countElection++;
                                             } else if (response.getMessageElection().equals("NO")) {
-                                                System.out.println("Non gestisco la corsa");
+                                                System.out.println("🚕 NOT manage ride " + ride.getIDRide());
                                                 break;
                                             }
 
                                             if (countElection == taxiList.size() - 1) {
+                                                System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
                                                 taxiTakesRide(ride);
                                             }
                                         } catch (Exception e) {
-
                                             //System.out.println("ERRORE: " + e.getMessage());
                                             System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
-
-                                            // TODO: remove taxi if this doesn't response
-                                            //TaxiIstance.getInstance().remove(tavi)
-
+                                            TaxiIstance.getInstance().removeTaxi(taxi);
                                         }
                                         channel.shutdownNow();
                                     }
@@ -228,6 +222,8 @@ public class TaxiPubSub extends Thread {
         if (taxiList.size() == 1) {
             System.out.println("🚖 I'm the only Taxi, I don't update anyone!");
         } else {
+            System.out.println("🚖 I contact other Taxis to update my info");
+
             for (Taxi taxi : taxiList) {
                 if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) { // check if taxi is unequal of iteration
                     //opening a connection with the taxi's server
@@ -247,6 +243,7 @@ public class TaxiPubSub extends Thread {
                     GrpcServiceOuterClass.TaxiInfoAfterRideRequest request = GrpcServiceOuterClass.TaxiInfoAfterRideRequest
                             .newBuilder()
                             .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
+                            .setIdRide(ride.getIDRide())
                             .setBatteryLevel(updateBatteryLevel)
                             .setFinalPosition(position)
                             .build();
@@ -254,12 +251,11 @@ public class TaxiPubSub extends Thread {
                     GrpcServiceOuterClass.TaxiInfoAfterRideResponse response;
                     try {
                         response = stub.notifyTaxisAfterRide(request);
-                        System.out.println(response);
+                        //System.out.println(response);
                     } catch (Exception e) {
                         System.out.println("⚠️ TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
 
-                        // TODO: remove taxi if this doesn't response
-                        //TaxiIstance.getInstance().remove(taxi)
+                        TaxiIstance.getInstance().removeTaxi(taxi);
                     }
                     channel.shutdownNow();
                 }
@@ -282,6 +278,6 @@ public class TaxiPubSub extends Thread {
 
         // setRiding to false
         TaxiIstance.getInstance().getMyTaxi().setInRide(false);
-        System.out.println("🚕 Ride TERMINATE");
+        System.out.println("🚕 Ride FINISHED");
     }
 }

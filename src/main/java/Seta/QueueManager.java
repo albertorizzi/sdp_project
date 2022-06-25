@@ -15,7 +15,7 @@ import org.eclipse.paho.client.mqttv3.*;
 import java.util.ArrayList;
 
 public class QueueManager extends Thread {
-    private MqttClient client;
+    private static MqttClient client;
     private String clientId;
     private ArrayList<String> subTopicArray;
     private int subQos;
@@ -92,5 +92,15 @@ public class QueueManager extends Thread {
         }
 
 
+    }
+
+    public static void disconnectClient(){
+        //System.out.println("disconnectClient()");
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            System.out.println("disconnectClient - Errore: " + e);
+        }
+        System.out.println("✅ MQTT Client disconnected successfully!");
     }
 }

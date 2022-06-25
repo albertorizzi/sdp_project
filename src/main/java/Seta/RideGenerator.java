@@ -12,7 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class RideGenerator extends Thread {
-    private MqttClient client;
+    private static MqttClient client;
     private String clientId;
     private String topic;
     private int qos;
@@ -63,6 +63,12 @@ public class RideGenerator extends Thread {
                 int id = idRide;
                 int min = 0, max = 9;
 
+                startPosition = new Position(0,3);
+                endPosition = new Position(0,4);
+
+                // TODO: debug decommentare
+                /*
+
                 startPosition = null;
                 endPosition = null;
 
@@ -70,6 +76,8 @@ public class RideGenerator extends Thread {
                     startPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
                     endPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
                 }
+
+                 */
 
                 actualDistrict = startPosition.getDistrictByPosition();
                 ride = new Ride(id, startPosition, endPosition);
@@ -87,10 +95,20 @@ public class RideGenerator extends Thread {
                 System.out.println("🗺 POSITION: start -> " + actualDistrict + ", destination -> " + ride.getDestinationPosition().getDistrictByPosition());
                 client.publish(topic + actualDistrict, message);
 
-                Thread.sleep(5000);
+                Thread.sleep(8000); // TODO: check 5000
             } catch (MqttException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static void disconnectClient(){
+        //System.out.println("disconnectClient()");
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            System.out.println("disconnectClient - Errore: " + e);
+        }
+        System.out.println("✅ MQTT Client disconnected successfully!");
     }
 }

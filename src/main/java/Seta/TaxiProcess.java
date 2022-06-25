@@ -1,6 +1,7 @@
 package Seta;
 
 import AdministratorServer.Model.Position;
+import AdministratorServer.Model.Ride;
 import AdministratorServer.Model.Taxi;
 import com.example.taxis.GrpcServiceGrpc;
 import com.example.taxis.GrpcServiceOuterClass;
@@ -18,8 +19,16 @@ import Pollution.Measurement;
 import Pollution.MeasuramentManager;
 import Pollution.PM10Simulator;
 
+import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Scanner;
 
 public class TaxiProcess {
     private static String BASE_URL = "http://localhost:1337/";
@@ -27,9 +36,15 @@ public class TaxiProcess {
 
     public static void main(String[] args) {
         registrationMethod();
+        //registrationMethod2();
         welcomeServer();
+        // fromKeyboard();
     }
 
+    private static void registrationMethod2() {
+        System.out.println("ciao");
+
+    }
 
     // REGISTRATION
     private static void registrationMethod() {
@@ -38,7 +53,7 @@ public class TaxiProcess {
         boolean success = false;
 
         // information of Taxi
-        int randomId;
+        int randomId = 0;
         int min = 0, max = 1000;
         String addressServerAdministrator = "localhost";
 
@@ -49,28 +64,41 @@ public class TaxiProcess {
 
         // https://support.microsoft.com/en-us/topic/how-to-configure-rpc-to-use-certain-ports-and-how-to-help-secure-those-ports-by-using-ipsec-2a94b798-063a-479a-8452-9cf07ac613d9
         int port = (int) Math.floor(Math.random() * (5000 - 1024 + 1) + 1024);
-        randomId = (int) Math.floor(Math.random() * (max - min + 1) + min);
 
+        /*while (success) {
+            randomId = (int) Math.floor(Math.random() * (max - min + 1) + min);
+
+            try {
+                String bodyObject = "{\"id\":\"" + randomId + "\",\"addressServerAdministrator\":\"" + addressServerAdministrator + "\",\"portNumber\":\"" + port + "\"}";
+                response = webResource.type("application/json").post(ClientResponse.class, bodyObject);
+                output = response.getEntity(JSONArray.class);
+
+                success = true;
+            } catch (Exception e) {
+                System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
+            }
+        }*/
+        randomId = (int) Math.floor(Math.random() * (max - min + 1) + min);
 
         try {
             String bodyObject = "{\"id\":\"" + randomId + "\",\"addressServerAdministrator\":\"" + addressServerAdministrator + "\",\"portNumber\":\"" + port + "\"}";
-            response = webResource.type("application/json").post(ClientResponse.class, bodyObject);
-            System.out.println("response: " + response);
+            response = webResource.type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(ClientResponse.class, bodyObject);
 
 
+            System.out.println(response.getStatus());
             output = response.getEntity(JSONArray.class);
-            System.out.println("output: " + output);
 
+
+
+            success = true;
         } catch (Exception e) {
             System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
         }
 
         Taxi taxi;
-        Position position;
 
         for (int i = 0; i < output.length(); i++) {
             try {
-
                 JSONObject jsonObject = (JSONObject) output.get(i);
                 int taxiId;
                 taxiId = (int) jsonObject.get("id");
@@ -83,26 +111,25 @@ public class TaxiProcess {
 
                 taxi = new Taxi(taxiId, taxiPortNumber, taxiAddressServerAdministrator, taxiBattery, taxiPosition);
 
-
                 TaxiIstance.getInstance().addTaxi(taxi);
 
                 if (taxiId == randomId) {
                     TaxiIstance.getInstance().setIdCurrentTaxi(taxiId);
                 }
-
-
             } catch (JSONException e) {
-                System.out.println("registrationMethod 2 - JSONException: " + e.getMessage());
+                System.out.println("registrationMethod - JSONException: " + e.getMessage());
             }
 
-        } // for
+        }
+
         System.out.println("🚖 taxiList: " + TaxiIstance.getInstance().getTaxiList());
+        System.out.println("🚖 I'm Taxi: " + TaxiIstance.getInstance().getMyTaxi().getId());
 
-        startPollutionSensors(); // startPollutionSendor
+        startPollutionSensors(); // startPollutionSensor
 
-        // taxi si iscrive alle richieste di ride
+        // Taxi subscribe to the request of ride of own district
         TaxiPubSub taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
-        taxiPubSub.start();
+        taxiPubSub.start(); // thread start
     }
 
 
@@ -113,12 +140,11 @@ public class TaxiProcess {
         PM10Simulator pm10Simulator = new PM10Simulator(buffer);
         pm10Simulator.start();
 
-        // consumatore pollution
-        ArrayList<Measurement> measurementList = new ArrayList<>(); // lista delle misurazioni
-        ArrayList<Measurement> averageList = new ArrayList<>(); // lista delle medie delle misurazioni
+        // consumer pollution
+        ArrayList<Measurement> measurementList = new ArrayList<>(); // list of measurements
+        ArrayList<Measurement> averageList = new ArrayList<>(); // list of average of measurement
         new Thread(() -> {
             while (true) {
-
                 measurementList.addAll(buffer.readAllAndClean());
                 double sum = 0;
                 long timestamp = 0;
@@ -131,13 +157,9 @@ public class TaxiProcess {
                         new Measurement("pm10-" + measurementId++, "PM10", sum / 8, timestamp)
                 );
                 measurementList.clear(); // clear list of measurement
-
-
             }
         }).start();
-
-
-    } // startSimulator
+    }
 
 
     private static void welcomeServer() {
@@ -151,44 +173,31 @@ public class TaxiProcess {
             grpc.start();
             System.out.println("👾 GRPC SERVER started!");
 
-
             if (!TaxiIstance.getInstance().getTaxiList().isEmpty()) {
-                welcomeClient();
+                welcomeClient(); // create client only if taxiList is not empty
             }
 
-            //server.awaitTermination();
-
+            // grpc.awaitTermination();
         } catch (IOException e) {
             System.out.println("welcomeServer -IOException error");
             e.printStackTrace();
-
-
         }
     }
 
     private static void welcomeClient() {
-
-        //System.out.println("welcomeClient()");
-        //System.out.println("THREAD - GRPC CLIENT");
+        System.out.println("welcomeClient()");
 
         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
 
-
         for (Taxi taxi : taxiList) {
-
             if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+                System.out.println("🤝 Contacting Taxi " + taxi.getId() + "...");
 
-
-                System.out.println("🤝 Contacting Drone " + taxi.getId() + "...");
-
-                //opening a connection with the drone's server
+                //opening a connection with the taxi's server
                 final ManagedChannel channel = ManagedChannelBuilder
                         .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
                         .usePlaintext()
                         .build();
-
-                //System.out.println("[GRPC CLIENT] channel: " + channel);
-                //System.out.println("🤝 welcomeClient [GRPC Client] - Connected!");
 
                 GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
 
@@ -206,33 +215,28 @@ public class TaxiProcess {
                         .setPosition(position)
                         .setBatteryLevel(TaxiIstance.getInstance().getMyTaxi().getBatteryLevel())
                         .build();
-                //System.out.println("[GRPC CLIENT] request: " + request);
 
                 GrpcServiceOuterClass.HelloResponse response;
                 try {
-
                     response = stub.greeting(request);
-                    //System.out.println("[GRPC CLIENT] response frome drone " + drone.getId() + ": " + response.getId());
                     System.out.println(response);
-
-
                 } catch (Exception e) {
-
                     //System.out.println("ERRORE: " + e.getMessage());
                     System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
 
-                    // TODO: remove taxi if this doesn't response
-                    //TaxiIstance.getInstance().remove(tavi)
-
+                    TaxiIstance.getInstance().removeTaxi(taxi);
                 }
-
                 channel.shutdownNow();
             }
-
         }
-
-
     }
 
 
+
+
+
+    private static void sendStatsToServer() {
+        // TODO: inviare statistica al server
+        System.out.println("inviare statistiche al server, da fare");
+    }
 }

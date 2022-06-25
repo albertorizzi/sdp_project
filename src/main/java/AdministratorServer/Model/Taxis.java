@@ -33,15 +33,20 @@ public class Taxis {
 
     public synchronized void add(Taxi taxi) {
         Position position = taxi.defineInitialPositionOfRechargeStation();
-
-        System.out.println(position.toString());
-
         taxi.setPosition(position);
         taxi.setBatteryLevel(100);
-
-        System.out.println(taxi.toString());
-
         taxislist.add(taxi);
+    }
+
+    // remove
+    public synchronized boolean remove(int idTaxi){
+        for (Taxi taxi: taxislist) {
+            if (taxi.getId() == idTaxi) {
+                taxislist.remove(taxi);
+                return true; // remove correctely
+            }
+        }
+        return false; // NOT remove
     }
 
     public synchronized boolean checkTaxiIsAlreadyPresent(Taxi taxi) {

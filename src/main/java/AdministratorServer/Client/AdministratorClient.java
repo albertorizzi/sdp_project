@@ -80,7 +80,5 @@ public class AdministratorClient {
 
 
         } while (n != 0);
-
-
     }
 }

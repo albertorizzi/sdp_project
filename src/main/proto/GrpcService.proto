@@ -33,8 +33,9 @@ message RideElectionResponse {
 
 message TaxiInfoAfterRideRequest {
   int32 idTaxi = 1;
-  Position finalPosition = 2;
-  int32 batteryLevel = 3;
+  int32 idRide = 2;
+  Position finalPosition = 3;
+  int32 batteryLevel = 4;
 }
 
 message TaxiInfoAfterRideResponse {

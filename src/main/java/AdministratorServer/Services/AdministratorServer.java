@@ -13,7 +13,7 @@ public class AdministratorServer {
     @GET
     @Produces("application/json")
     public Response mainTaxiService() {
-        String string = "{\"server\": \"SETA\", \"environment\": \"production\"}";
+        String string = "{\"server\": \"SETA\", \"environment\": \"production\", \"path\": \"taxi\"}";
         return Response.status(Response.Status.OK).entity(string).build();
     }
 

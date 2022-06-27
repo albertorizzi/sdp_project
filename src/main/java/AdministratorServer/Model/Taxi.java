@@ -12,14 +12,14 @@ public class Taxi {
     private Integer batteryLevel;
     private Position position;
     private List<Taxi> listTaxiKnowed;
-    private boolean inCharge = false;
+    //private boolean inCharge = false;
     //private boolean inElection = false;
-    private boolean inRide = false;
-   // private boolean inExit = false;
+    //private boolean inRide = false;
+    // private boolean inExit = false;
 
-  //  private Object rechargeLock = new Object(); // lock durante recharging
-   // private Object rideLock = new Object(); // lock durante ride
- //   private Object electionLock = new Object(); // lock durante election
+    //  private Object rechargeLock = new Object(); // lock durante recharging
+    // private Object rideLock = new Object(); // lock durante ride
+    //   private Object electionLock = new Object(); // lock durante election
 
     // empty constructor
     public Taxi() {
@@ -85,21 +85,8 @@ public class Taxi {
         return position;
     }
 
-    public boolean isInCharge() {
-        return inCharge;
-    }
 
-    public void setInCharge(boolean inCharge) {
-        this.inCharge = inCharge;
-    }
 
-    public boolean isInRide() {
-        return inRide;
-    }
-
-    public void setInRide(boolean inRide) {
-        this.inRide = inRide;
-    }
 
 
 

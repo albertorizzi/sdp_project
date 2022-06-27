@@ -9,6 +9,8 @@ import com.example.taxis.GrpcServiceOuterClass;
 import com.sun.javafx.scene.traversal.SubSceneTraversalEngine;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Date;
+
 public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
     @Override
     public void greeting(GrpcServiceOuterClass.HelloRequest request, StreamObserver<GrpcServiceOuterClass.HelloResponse> responseObserver) {
@@ -55,7 +57,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
         if (startPositionRide.getDistrictByPosition() == TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition()) {
 
             // check if taxi is busy in a ride or in recharging
-            if (!TaxiIstance.getInstance().getMyTaxi().isInRide() && !TaxiIstance.getInstance().getMyTaxi().isInCharge()) {
+            if (!TaxiIstance.getInstance().isInRide() && !TaxiIstance.getInstance().isInCharge()) {
 
                 // comparison distances between Taxi position request and my position
                 double distanzeOfTaxiRequest = Utils.getDistanceBetweenTwoPosition(startPositionRide,
@@ -85,7 +87,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                     if (batteryLevelOfTaxiRequest > batteryLevelOfMyTaxi) {
                         // OK because Taxi request batteryLeval is much than my batteryLevel
 
-                       // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
+                        // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
 
                         response = GrpcServiceOuterClass.RideElectionResponse
                                 .newBuilder()
@@ -96,7 +98,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
                     } else if (batteryLevelOfTaxiRequest == batteryLevelOfMyTaxi) {
                         // equal batteryLevel, continue checking with IdTaxi
-                       // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
+                        // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
 
                         if (request.getIdTaxi() > TaxiIstance.getInstance().getMyTaxi().getId()) {
                             response = GrpcServiceOuterClass.RideElectionResponse
@@ -174,5 +176,80 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void recharge(GrpcServiceOuterClass.SendRechargeTaxiRequest request, StreamObserver<GrpcServiceOuterClass.ReplyRechargeTaxiResponse> responseObserver) {
+
+        Position positionOfTaxiAfterRide = new Position(request.getRechargeStation().getX(), request.getRechargeStation().getY());
+
+        int idTaxi = request.getIdTaxi();
+        long timestampRequest = request.getTimestamp();
+
+        Date date = new Date();
+        long actualTime = date.getTime(); // timestamp in ms
+
+        System.out.println("\n" + "⚖️🪫 Made election for STATION RECHARGE of districts " + positionOfTaxiAfterRide.getDistrictByPosition() + " from Taxi " + idTaxi);
+
+        GrpcServiceOuterClass.ReplyRechargeTaxiResponse response = null;
+
+        if (TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition() == positionOfTaxiAfterRide.getDistrictByPosition()) {
+
+            if (TaxiIstance.getInstance().getInCharge() == TaxiIstance.RechargeStatus.BATTERY_REQUESTED) {
+                // controllo il tempo
+
+                if (actualTime < timestampRequest) {
+                    synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                        try {
+                            TaxiIstance.getInstance().getRechargeLock().wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    response = GrpcServiceOuterClass.ReplyRechargeTaxiResponse
+                            .newBuilder()
+                            .setMessageResponse("OK")
+                            .build();
+                } else {
+                    response = GrpcServiceOuterClass.ReplyRechargeTaxiResponse
+                            .newBuilder()
+                            .setMessageResponse("OK")
+                            .build();
+                }
+
+            } else if (TaxiIstance.getInstance().getInCharge() == TaxiIstance.RechargeStatus.BATTERY_IN_USED) {
+                synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                    try {
+                        TaxiIstance.getInstance().getRechargeLock().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                response = GrpcServiceOuterClass.ReplyRechargeTaxiResponse
+                        .newBuilder()
+                        .setMessageResponse("OK")
+                        .build();
+
+            } else if (TaxiIstance.getInstance().getInCharge() == TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED) {
+                response = GrpcServiceOuterClass.ReplyRechargeTaxiResponse
+                        .newBuilder()
+                        .setMessageResponse("OK")
+                        .build();
+            }
+        } else {
+            // OK because request has a district unequal of my district
+
+            response = GrpcServiceOuterClass.ReplyRechargeTaxiResponse
+                    .newBuilder()
+                    .setMessageResponse("OK")
+                    .build();
+        }
+
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+
     }
 }

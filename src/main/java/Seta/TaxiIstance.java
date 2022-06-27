@@ -14,6 +14,25 @@ public class TaxiIstance {
     private ArrayList<Measurement> averageListPollutionMeasurements;
     private static TaxiIstance instance;
     private int idCurrentTaxi;
+    private int kmTravelled = 0;
+    private int numberRides = 0;
+
+
+    private boolean inElection = false;
+    private boolean inRide = false;
+    private boolean inExit = false;
+    private Object rechargeLock = new Object(); // lock durante recharging
+    private Object rideLock = new Object(); // lock durante ride
+    private Object electionLock = new Object(); // lock durante election
+
+    enum RechargeStatus {
+        BATTERY_REQUESTED,
+        BATTERY_IN_USED,
+        BATTERY_NOT_IN_USED
+    }
+
+    private RechargeStatus inCharge = RechargeStatus.BATTERY_NOT_IN_USED;
+
 
     // Constructor
     private TaxiIstance() {
@@ -81,5 +100,73 @@ public class TaxiIstance {
 
         taxi.setPosition(position);
         taxi.setBatteryLevel(batteryLevel);
+    }
+
+    public void addKmTravelled(int kmTravelled) {
+        this.kmTravelled = this.kmTravelled + kmTravelled;
+    }
+
+    public int kmTravelled() {
+        return kmTravelled;
+    }
+
+    public void addNumberRides() {
+        numberRides++;
+    }
+
+    public int getNumberRides() {
+        return numberRides;
+    }
+
+    public boolean isInCharge() {
+        if (inCharge == RechargeStatus.BATTERY_NOT_IN_USED) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void setInCharge(RechargeStatus inCharge) {
+        this.inCharge = inCharge;
+    }
+
+    public boolean isInElection() {
+        return inElection;
+    }
+
+    public void setInElection(boolean inElection) {
+        this.inElection = inElection;
+    }
+
+    public boolean isInRide() {
+        return inRide;
+    }
+
+    public void setInRide(boolean inRide) {
+        this.inRide = inRide;
+    }
+
+    public boolean isInExit() {
+        return inExit;
+    }
+
+    public void setInExit(boolean inExit) {
+        this.inExit = inExit;
+    }
+
+    public RechargeStatus getInCharge() {
+        return inCharge;
+    }
+
+    public Object getRechargeLock() {
+        return rechargeLock;
+    }
+
+    public Object getRideLock() {
+        return rideLock;
+    }
+
+    public Object getElectionLock() {
+        return electionLock;
     }
 }

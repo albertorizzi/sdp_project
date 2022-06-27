@@ -8,11 +8,13 @@ import com.example.taxis.GrpcServiceGrpc;
 import com.example.taxis.GrpcServiceOuterClass;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import jdk.nashorn.internal.runtime.ECMAException;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class TaxiPubSub extends Thread {
     private static MqttClient client;
@@ -87,8 +89,7 @@ public class TaxiPubSub extends Thread {
                     System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
                     // check if I'm riding or I'm busy in a ride
-                    // TODO: add check if I would to recharge battery
-                    if (TaxiIstance.getInstance().getMyTaxi().isInCharge() || TaxiIstance.getInstance().getMyTaxi().isInRide()) {
+                    if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide()) {
                         System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
                     } else {
                         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
@@ -98,53 +99,53 @@ public class TaxiPubSub extends Thread {
                             taxiTakesRide(ride);
                         } else {
                             for (Taxi taxi : taxiList) {
-                                if (!taxi.isInCharge() || !taxi.isInRide()) {
-                                    if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
-                                        //opening a connection with the taxi's server
-                                        final ManagedChannel channel = ManagedChannelBuilder
-                                                .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
-                                                .usePlaintext()
-                                                .build();
+                                if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+                                    //opening a connection with the taxi's server
+                                    final ManagedChannel channel = ManagedChannelBuilder
+                                            .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                                            .usePlaintext()
+                                            .build();
 
-                                        GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+                                    GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
 
-                                        GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
-                                                .newBuilder()
-                                                .setX(ride.getStartPosition().getX())
-                                                .setY(ride.getStartPosition().getY())
-                                                .build();
+                                    GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
+                                            .newBuilder()
+                                            .setX(ride.getStartPosition().getX())
+                                            .setY(ride.getStartPosition().getY())
+                                            .build();
 
-                                        GrpcServiceOuterClass.RideElectionRequest request = GrpcServiceOuterClass.RideElectionRequest
-                                                .newBuilder()
-                                                .setIdTaxi(taxi.getId())
-                                                .setIdRide(ride.getIDRide())
-                                                .setStartPositionRide(position)
-                                                .build();
+                                    GrpcServiceOuterClass.RideElectionRequest request = GrpcServiceOuterClass.RideElectionRequest
+                                            .newBuilder()
+                                            .setIdTaxi(taxi.getId())
+                                            .setIdRide(ride.getIDRide())
+                                            .setStartPositionRide(position)
+                                            .build();
 
-                                        GrpcServiceOuterClass.RideElectionResponse response;
-                                        try {
-                                            response = stub.election(request);
+                                    GrpcServiceOuterClass.RideElectionResponse response;
+                                    try {
+                                        response = stub.election(request);
 
-                                            if (response.getMessageElection().equals("OK")) {
-                                                countElection++;
-                                            } else if (response.getMessageElection().equals("NO")) {
-                                                System.out.println("🚕 NOT manage ride " + ride.getIDRide());
-                                                break;
-                                            }
-
-                                            if (countElection == taxiList.size() - 1) {
-                                                System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
-
-                                                taxiTakesRide(ride);
-                                            }
-                                        } catch (Exception e) {
-                                            //System.out.println("ERRORE: " + e.getMessage());
-                                            System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
-                                            TaxiIstance.getInstance().removeTaxi(taxi);
+                                        if (response.getMessageElection().equals("OK")) {
+                                            countElection++;
+                                        } else if (response.getMessageElection().equals("NO")) {
+                                            break;
                                         }
-                                        channel.shutdownNow();
+
+                                        if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
+                                            System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                                            taxiTakesRide(ride);
+                                        } else {
+                                            System.out.println("🚕 NOT manage ride " + ride.getIDRide());
+                                        }
+                                    } catch (Exception e) {
+                                        //System.out.println("ERRORE: " + e.getMessage());
+                                        System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                                        TaxiIstance.getInstance().removeTaxi(taxi);
                                     }
+                                    channel.shutdownNow();
                                 }
+
                             }
                         }
                     }
@@ -193,7 +194,7 @@ public class TaxiPubSub extends Thread {
     */
     private void taxiTakesRide(Ride ride) throws MqttException, InterruptedException {
         //  System.out.println("Gestisco io la corsa" + ride);
-        TaxiIstance.getInstance().getMyTaxi().setInRide(true);
+        TaxiIstance.getInstance().setInRide(true);
 
         MqttMessage payload = new MqttMessage(ride.toJsonString().getBytes()); // getBytes converts message in binary
 
@@ -213,8 +214,107 @@ public class TaxiPubSub extends Thread {
         final int percentageBatteryUsedForKm = 1;
         int updateBatteryLevel = TaxiIstance.getInstance().getMyTaxi().getBatteryLevel() - kmRide * percentageBatteryUsedForKm;
 
-        // set new batteryLevel
+        System.out.println(kmRide);
+        System.out.println(updateBatteryLevel);
+
+        Position newTaxiPosition = ride.getDestinationPosition();
+
+        // check if batteries is < 30 %
+        // TODO: cambiare livello
+        if (updateBatteryLevel < 99) {
+
+            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
+
+            ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
+            int countElection = 0;
+
+            Date date = new Date();
+            long timestamp = date.getTime(); // timestamp in ms
+
+            if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
+                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " district WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                // recharge
+                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+                Thread.sleep(10000); // 10 seconds
+
+                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                updateBatteryLevel = 100;
+                ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
+                newTaxiPosition = new Position(arr.get(0), arr.get(1));
+
+                System.out.println(newTaxiPosition);
+
+            } else {
+                for (Taxi taxi : taxiList) {
+                    if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+                        //opening a connection with the taxi's server
+                        final ManagedChannel channel = ManagedChannelBuilder
+                                .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                                .usePlaintext()
+                                .build();
+
+                        GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+
+                        GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
+                                .newBuilder()
+                                .setX(newTaxiPosition.getX())
+                                .setY(newTaxiPosition.getY())
+                                .build();
+
+                        GrpcServiceOuterClass.SendRechargeTaxiRequest request = GrpcServiceOuterClass.SendRechargeTaxiRequest
+                                .newBuilder()
+                                .setIdTaxi(taxi.getId())
+                                .setRechargeStation(position)
+                                .setTimestamp(timestamp)
+                                .build();
+
+                        GrpcServiceOuterClass.ReplyRechargeTaxiResponse response;
+
+                        try {
+                            response = stub.recharge(request);
+
+                            if (response.getMessageResponse().equals("OK")) {
+                                countElection++;
+                            } else if (response.getMessageResponse().equals("NO")) {
+                                break;
+                            }
+
+                            if (countElection == taxiList.size() - 1) {
+                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                                // recharge
+                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+                                Thread.sleep(10000); // 10 seconds
+
+                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                                updateBatteryLevel = 100;
+                                ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
+                                newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
+                            } else {
+                                System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                            }
+                        } catch (Exception e) {
+                            //System.out.println("ERRORE: " + e.getMessage());
+                            System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                            TaxiIstance.getInstance().removeTaxi(taxi);
+                        }
+                        channel.shutdownNow();
+                    }
+
+                }
+            }
+        }
+
+
+        // set new batteryLevel, position, kmTravelled, numberRides
         TaxiIstance.getInstance().getMyTaxi().setBatteryLevel(updateBatteryLevel);
+        TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
+        TaxiIstance.getInstance().addKmTravelled(kmRide);
+        TaxiIstance.getInstance().addNumberRides();
+
 
         // update other taxi with my new data
         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
@@ -236,8 +336,8 @@ public class TaxiPubSub extends Thread {
 
                     GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
                             .newBuilder()
-                            .setX(ride.getDestinationPosition().getX())
-                            .setY(ride.getDestinationPosition().getY())
+                            .setX(newTaxiPosition.getX())
+                            .setY(newTaxiPosition.getY())
                             .build();
 
                     GrpcServiceOuterClass.TaxiInfoAfterRideRequest request = GrpcServiceOuterClass.TaxiInfoAfterRideRequest
@@ -263,21 +363,21 @@ public class TaxiPubSub extends Thread {
             }
         }
 
-        // I change the district with the district of destination position (ONLY if change)
-        if (ride.getStartPosition().getDistrictByPosition() != ride.getDestinationPosition().getDistrictByPosition()) {
+        // I change the district with the district of destination position or recharge station (ONLY if change)
+        if (ride.getStartPosition().getDistrictByPosition() != newTaxiPosition.getDistrictByPosition()) {
             client.unsubscribe(topic);
-            setDistrictNumber(ride.getDestinationPosition().getDistrictByPosition());
+            setDistrictNumber(newTaxiPosition.getDistrictByPosition());
 
-            setTopic(BASE_TOPIC + ride.getDestinationPosition().getDistrictByPosition());
+            setTopic(BASE_TOPIC + newTaxiPosition.getDistrictByPosition());
             client.subscribe(topic);
 
-            System.out.println("🗺 NEW district: " + ride.getDestinationPosition().getDistrictByPosition());
+            System.out.println("🗺 NEW district: " + newTaxiPosition.getDistrictByPosition());
         } else {
-            System.out.println("🗺 SAME district: " + ride.getDestinationPosition().getDistrictByPosition());
+            System.out.println("🗺 SAME district: " + newTaxiPosition.getDistrictByPosition());
         }
 
         // setRiding to false
-        TaxiIstance.getInstance().getMyTaxi().setInRide(false);
+        TaxiIstance.getInstance().setInRide(false);
         System.out.println("🚕 Ride FINISHED");
     }
 }

@@ -63,11 +63,14 @@ public class RideGenerator extends Thread {
                 int id = idRide;
                 int min = 0, max = 9;
 
+                /*
                 startPosition = new Position(0,3);
                 endPosition = new Position(0,4);
 
+                */
+
+
                 // TODO: debug decommentare
-                /*
 
                 startPosition = null;
                 endPosition = null;
@@ -77,7 +80,7 @@ public class RideGenerator extends Thread {
                     endPosition = new Position((int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
                 }
 
-                 */
+
 
                 actualDistrict = startPosition.getDistrictByPosition();
                 ride = new Ride(id, startPosition, endPosition);

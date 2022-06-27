@@ -88,8 +88,8 @@ public class TaxiPubSub extends Thread {
                     Ride ride = new Ride(idRide, startPosition, destinationPosition);
                     System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
-                    // check if I'm riding or I'm busy in a ride
-                    if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide()) {
+                    // check if I'm riding or I'm busy in a ride or is in an election
+                    if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
                         System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
                     } else {
                         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
@@ -196,6 +196,12 @@ public class TaxiPubSub extends Thread {
         //  System.out.println("Gestisco io la corsa" + ride);
         TaxiIstance.getInstance().setInRide(true);
 
+        // Notifico che non sono più in un'elezione con il notify
+        synchronized (TaxiIstance.getInstance().getElectionLock()) {
+            TaxiIstance.getInstance().setInElection(false);
+            TaxiIstance.getInstance().getElectionLock().notify();
+        }
+
         MqttMessage payload = new MqttMessage(ride.toJsonString().getBytes()); // getBytes converts message in binary
 
         // TOPIC example: "seta/smartcity/rides/15/accomplished"
@@ -214,9 +220,6 @@ public class TaxiPubSub extends Thread {
         final int percentageBatteryUsedForKm = 1;
         int updateBatteryLevel = TaxiIstance.getInstance().getMyTaxi().getBatteryLevel() - kmRide * percentageBatteryUsedForKm;
 
-        System.out.println(kmRide);
-        System.out.println(updateBatteryLevel);
-
         Position newTaxiPosition = ride.getDestinationPosition();
 
         // check if batteries is < 30 %
@@ -224,6 +227,7 @@ public class TaxiPubSub extends Thread {
         if (updateBatteryLevel < 99) {
 
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
+
 
             ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
             int countElection = 0;
@@ -239,13 +243,16 @@ public class TaxiPubSub extends Thread {
 
                 Thread.sleep(10000); // 10 seconds
 
-                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
                 updateBatteryLevel = 100;
                 ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
                 newTaxiPosition = new Position(arr.get(0), arr.get(1));
 
                 System.out.println(newTaxiPosition);
 
+                synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                    TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                    TaxiIstance.getInstance().getRechargeLock().notify();
+                }
             } else {
                 for (Taxi taxi : taxiList) {
                     if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
@@ -293,6 +300,11 @@ public class TaxiPubSub extends Thread {
                                 updateBatteryLevel = 100;
                                 ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
                                 newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
+
+                                synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                                    TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                                    TaxiIstance.getInstance().getRechargeLock().notify();
+                                }
                             } else {
                                 System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                             }
@@ -377,7 +389,21 @@ public class TaxiPubSub extends Thread {
         }
 
         // setRiding to false
-        TaxiIstance.getInstance().setInRide(false);
+
+        synchronized (TaxiIstance.getInstance().getRideLock()) {
+            TaxiIstance.getInstance().setInRide(false);
+            TaxiIstance.getInstance().getRideLock().notify();
+        }
         System.out.println("🚕 Ride FINISHED");
+    }
+
+    public static void disconnectClient() {
+        //System.out.println("disconnectClient()");
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            System.out.println("disconnectClient - Errore: " + e);
+        }
+        System.out.println("✅ MQTT Client disconnected successfully!");
     }
 }

@@ -33,17 +33,17 @@ import java.util.Scanner;
 public class TaxiProcess {
     private static String BASE_URL = "http://localhost:1337/";
     private static Server grpc;
+    private static TaxiPubSub taxiPubSub;
 
     public static void main(String[] args) {
         registrationMethod();
         //registrationMethod2();
         welcomeServer();
-        // fromKeyboard();
+        fromKeyboard();
     }
 
     private static void registrationMethod2() {
         System.out.println("ciao");
-
     }
 
     // REGISTRATION
@@ -89,7 +89,6 @@ public class TaxiProcess {
             output = response.getEntity(JSONArray.class);
 
 
-
             success = true;
         } catch (Exception e) {
             System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
@@ -128,7 +127,7 @@ public class TaxiProcess {
         startPollutionSensors(); // startPollutionSensor
 
         // Taxi subscribe to the request of ride of own district
-        TaxiPubSub taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
+        taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
         taxiPubSub.start(); // thread start
     }
 
@@ -231,8 +230,309 @@ public class TaxiProcess {
         }
     }
 
+    private static void fromKeyboard() {
+
+        new Thread(() -> { // lambda expression
+            while (true) {
+                Scanner scanner = new Scanner(System.in);
+                //System.out.print("⏹ Send quit to stop the drone process...\n");
+                String input = scanner.next();
+
+                switch (input) {
+                    case "quit":
+                        try {
+                            doExit();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        break;
+                    case "re":
+                        System.out.print("⚡️ recharge request\n");
+                        if (TaxiIstance.getInstance().isInExit())
+                            System.out.println("⚡️ I can't recharge, I'm quitting");
+                        else {
+                            try {
+                                recharge();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        break;
+
+                    default:
+                        System.out.println("⚠️ Input NOT VALID");
+                }
+            }
+        }).start();
+
+    }
+
+    private static void recharge() throws InterruptedException {
+        System.out.println("election in corso: " + TaxiIstance.getInstance().isInElection()); // debug
+
+        if (TaxiIstance.getInstance().isInElection()) {
+            synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                while (TaxiIstance.getInstance().isInElection()) {
+                    try {
+                        System.out.println("⏹🗳 I can't recharge, I'm inside an election...WAIT");
+                        TaxiIstance.getInstance().getElectionLock().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.println("⏹🗳 I'm not inside an election anymore.");
+            }
+        }
+
+        if (TaxiIstance.getInstance().isInRide()) {
+
+            // se un taxi sta facendo la ride, non può quittare
+            //System.out.println("isDelivering: " + DroneSingleton.getInstance().isDelivering()); // debug
+            synchronized (TaxiIstance.getInstance().getRideLock()) {
+                while (TaxiIstance.getInstance().isInRide()) {
+                    try {
+                        System.out.println("⏹🚚 I can't recharge, I'm delivering...WAIT");
+                        TaxiIstance.getInstance().getRideLock().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.println("⏹🚚️ I'm not delivering anymore.");
+            }
+        }
 
 
+
+
+        TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
+
+        ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
+        int countElection = 0;
+
+        Date date = new Date();
+        long timestamp = date.getTime(); // timestamp in ms
+
+        Position newTaxiPosition = TaxiIstance.getInstance().getMyTaxi().getPosition();;
+        int updateBatteryLevel = 100;
+
+        if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
+            System.out.println("♻️ 🪫️ RECHARGE station in " + TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition() + " district WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+            // recharge
+            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+            System.out.println("⚡️ Charging...");
+            Thread.sleep(10000); // 10 seconds
+            System.out.println("⚡️ Battery completed...");
+
+            synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                TaxiIstance.getInstance().getRechargeLock().notify();
+            }
+        } else {
+            for (Taxi taxi : taxiList) {
+                if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+                    //opening a connection with the taxi's server
+                    final ManagedChannel channel = ManagedChannelBuilder
+                            .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                            .usePlaintext()
+                            .build();
+
+                    GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+
+                    GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
+                            .newBuilder()
+                            .setX(newTaxiPosition.getX())
+                            .setY(newTaxiPosition.getY())
+                            .build();
+
+                    GrpcServiceOuterClass.SendRechargeTaxiRequest request = GrpcServiceOuterClass.SendRechargeTaxiRequest
+                            .newBuilder()
+                            .setIdTaxi(taxi.getId())
+                            .setRechargeStation(position)
+                            .setTimestamp(timestamp)
+                            .build();
+
+                    GrpcServiceOuterClass.ReplyRechargeTaxiResponse response;
+
+                    try {
+                        response = stub.recharge(request);
+
+                        if (response.getMessageResponse().equals("OK")) {
+                            countElection++;
+                        } else if (response.getMessageResponse().equals("NO")) {
+                            break;
+                        }
+
+                        if (countElection == taxiList.size() - 1) {
+                            System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                            // recharge
+                            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+                            System.out.println("⚡️ Charging...");
+                            Thread.sleep(10000); // 10 seconds
+                            System.out.println("⚡️ Battery completed...");
+
+
+                            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+
+                            ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
+                            newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
+
+                            synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                                TaxiIstance.getInstance().getRechargeLock().notify();
+                            }
+                        } else {
+                            System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                        }
+                    } catch (Exception e) {
+                        //System.out.println("ERRORE: " + e.getMessage());
+                        System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                        TaxiIstance.getInstance().removeTaxi(taxi);
+                    }
+                    channel.shutdownNow();
+                }
+
+            }
+        }
+
+        // set new batteryLevel, position, kmTravelled, numberRides
+        TaxiIstance.getInstance().getMyTaxi().setBatteryLevel(updateBatteryLevel);
+        TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
+
+        // update other taxi with my new data
+
+        if (taxiList.size() == 1) {
+            System.out.println("🚖 I'm the only Taxi, I don't update anyone!");
+        } else {
+            System.out.println("🚖 I contact other Taxis to update my info");
+
+            for (Taxi taxi : taxiList) {
+                if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) { // check if taxi is unequal of iteration
+                    //opening a connection with the taxi's server
+                    final ManagedChannel channel = ManagedChannelBuilder
+                            .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                            .usePlaintext()
+                            .build();
+
+                    GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+
+                    GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
+                            .newBuilder()
+                            .setX(newTaxiPosition.getX())
+                            .setY(newTaxiPosition.getY())
+                            .build();
+
+                    GrpcServiceOuterClass.TaxiInfoAfterRideRequest request = GrpcServiceOuterClass.TaxiInfoAfterRideRequest
+                            .newBuilder()
+                            .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
+                            .setBatteryLevel(updateBatteryLevel)
+                            .setFinalPosition(position)
+                            .build();
+
+                    GrpcServiceOuterClass.TaxiInfoAfterRideResponse response;
+                    try {
+                        response = stub.notifyTaxisAfterRide(request);
+                        //System.out.println(response);
+                    } catch (Exception e) {
+                        System.out.println("⚠️ TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
+
+                        TaxiIstance.getInstance().removeTaxi(taxi);
+                    }
+                    channel.shutdownNow();
+                }
+
+            }
+        }
+    }
+
+    public static void doExit() throws IOException {
+
+        if (TaxiIstance.getInstance().isInExit()) {
+            return;
+        }
+        TaxiIstance.getInstance().setInExit(true);
+
+        //System.out.println("doExit()");
+        System.out.println("\n⏹ STOPPING everything...");
+
+        // se un taxi è in election, non può quittare
+        System.out.println("election in corso: " + TaxiIstance.getInstance().isInElection()); // debug
+        synchronized (TaxiIstance.getInstance().getElectionLock()) {
+            while (TaxiIstance.getInstance().isInElection()) {
+                try {
+                    System.out.println("⏹🗳 I can't quit, I'm inside an election...WAIT");
+                    TaxiIstance.getInstance().getElectionLock().wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("⏹🗳 I'm not inside an election anymore.");
+        }
+
+        // se un taxi sta facendo la ride, non può quittare
+        //System.out.println("isDelivering: " + DroneSingleton.getInstance().isDelivering()); // debug
+        synchronized (TaxiIstance.getInstance().getRideLock()) {
+            while (TaxiIstance.getInstance().isInRide()) {
+                try {
+                    System.out.println("⏹🚚 I can't quit, I'm delivering...WAIT");
+                    TaxiIstance.getInstance().getRideLock().wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("⏹🚚️ I'm not delivering anymore.");
+        }
+
+
+        // 4.4 disconnettersi dal BROKER
+        taxiPubSub.disconnectClient();
+
+        // 4.7 inviare al server le statistiche globali della smart city
+        System.out.println("⏹ Sending last stats to the REST Server...");
+        sendStatsToServer();
+
+
+        // 4.2 + 4.6 chiudere le comunicazioni (channel grpc) con gli altri taxi
+        // le chiudo già ogni volta che le uso
+
+        System.out.println("⏹ Shutting down the Grpc Server...");
+        try {
+            grpc.shutdownNow();
+        } catch (Exception e) {
+            System.out.println("Errore nella chiusura del server: " + e);
+        }
+
+        // 4.3 comunicare l'uscita al server (REST)
+        System.out.println("⏹ Contacting the REST Server...");
+        int id = TaxiIstance.getInstance().getMyTaxi().getId();
+        try {
+            URL url = new URL("http://localhost:1337/taxi/remove/" + id);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("DELETE");
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            bufferedReader.close();
+            urlConnection.disconnect();
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        // 5. SUPER USCITA
+        System.exit(0);
+
+    }
 
 
     private static void sendStatsToServer() {

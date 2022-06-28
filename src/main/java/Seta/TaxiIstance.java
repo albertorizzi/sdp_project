@@ -74,6 +74,14 @@ public class TaxiIstance {
         }
     }
 
+    public ArrayList<Measurement> getAverageListPollutionMeasurements() {
+        return averageListPollutionMeasurements;
+    }
+
+    public int getKmTravelled() {
+        return kmTravelled;
+    }
+
     public int getIdCurrentTaxi() {
         return idCurrentTaxi;
     }

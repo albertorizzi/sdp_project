@@ -1,5 +1,8 @@
 package Pollution;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class Measurement implements Comparable<Measurement> {
 
     private String id;

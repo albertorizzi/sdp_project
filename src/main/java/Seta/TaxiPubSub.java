@@ -92,6 +92,7 @@ public class TaxiPubSub extends Thread {
                     if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
                         System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
                     } else {
+                        System.out.println("dentro esle");
                         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
                         int countElection = 0;
 
@@ -116,22 +117,35 @@ public class TaxiPubSub extends Thread {
 
                                     GrpcServiceOuterClass.RideElectionRequest request = GrpcServiceOuterClass.RideElectionRequest
                                             .newBuilder()
-                                            .setIdTaxi(taxi.getId())
+                                            .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
                                             .setIdRide(ride.getIDRide())
                                             .setStartPositionRide(position)
+                                            .setBatteryLevel(TaxiIstance.getInstance().getMyTaxi().getBatteryLevel())
                                             .build();
 
                                     GrpcServiceOuterClass.RideElectionResponse response;
                                     try {
                                         response = stub.election(request);
+                                        System.out.println(response);
 
                                         if (response.getMessageElection().equals("OK")) {
                                             countElection++;
                                         } else if (response.getMessageElection().equals("NO")) {
+                                            synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                                                TaxiIstance.getInstance().setInElection(false);
+                                                TaxiIstance.getInstance().getElectionLock().notify();
+                                            }
+
+                                            System.out.println("NON GESTISCO IO LA RIDE: " + ride.getIDRide() + " nel district: " + ride.getStartPosition().getDistrictByPosition());
+
                                             break;
                                         }
 
+
                                         if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
+                                            System.out.println(countElection);
+
+
                                             System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                                             taxiTakesRide(ride);
@@ -224,7 +238,7 @@ public class TaxiPubSub extends Thread {
 
         // check if batteries is < 30 %
         // TODO: cambiare livello
-        if (updateBatteryLevel < 99) {
+        if (updateBatteryLevel < 30) {
 
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 

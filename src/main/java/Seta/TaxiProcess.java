@@ -1,10 +1,11 @@
 package Seta;
 
 import AdministratorServer.Model.Position;
-import AdministratorServer.Model.Ride;
+import AdministratorServer.Model.Statistic;
 import AdministratorServer.Model.Taxi;
 import com.example.taxis.GrpcServiceGrpc;
 import com.example.taxis.GrpcServiceOuterClass;
+import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -19,7 +20,6 @@ import Pollution.Measurement;
 import Pollution.MeasuramentManager;
 import Pollution.PM10Simulator;
 
-import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,13 +37,8 @@ public class TaxiProcess {
 
     public static void main(String[] args) {
         registrationMethod();
-        //registrationMethod2();
         welcomeServer();
-        fromKeyboard();
-    }
-
-    private static void registrationMethod2() {
-        System.out.println("ciao");
+        manageInputFromKeyboard();
     }
 
     // REGISTRATION
@@ -65,33 +60,23 @@ public class TaxiProcess {
         // https://support.microsoft.com/en-us/topic/how-to-configure-rpc-to-use-certain-ports-and-how-to-help-secure-those-ports-by-using-ipsec-2a94b798-063a-479a-8452-9cf07ac613d9
         int port = (int) Math.floor(Math.random() * (5000 - 1024 + 1) + 1024);
 
-        /*while (success) {
+        while (!success) {
             randomId = (int) Math.floor(Math.random() * (max - min + 1) + min);
 
             try {
                 String bodyObject = "{\"id\":\"" + randomId + "\",\"addressServerAdministrator\":\"" + addressServerAdministrator + "\",\"portNumber\":\"" + port + "\"}";
                 response = webResource.type("application/json").post(ClientResponse.class, bodyObject);
-                output = response.getEntity(JSONArray.class);
+
+                if (response.getStatus() == 201) {
+                    output = response.getEntity(JSONArray.class);
+                } else {
+                    System.out.println("Server error in POST taxi/add");
+                }
 
                 success = true;
             } catch (Exception e) {
                 System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
             }
-        }*/
-        randomId = (int) Math.floor(Math.random() * (max - min + 1) + min);
-
-        try {
-            String bodyObject = "{\"id\":\"" + randomId + "\",\"addressServerAdministrator\":\"" + addressServerAdministrator + "\",\"portNumber\":\"" + port + "\"}";
-            response = webResource.type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(ClientResponse.class, bodyObject);
-
-
-            System.out.println(response.getStatus());
-            output = response.getEntity(JSONArray.class);
-
-
-            success = true;
-        } catch (Exception e) {
-            System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
         }
 
         Taxi taxi;
@@ -125,6 +110,7 @@ public class TaxiProcess {
         System.out.println("🚖 I'm Taxi: " + TaxiIstance.getInstance().getMyTaxi().getId());
 
         startPollutionSensors(); // startPollutionSensor
+        startStatisticsToServer();
 
         // Taxi subscribe to the request of ride of own district
         taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
@@ -230,7 +216,7 @@ public class TaxiProcess {
         }
     }
 
-    private static void fromKeyboard() {
+    private static void manageInputFromKeyboard() {
 
         new Thread(() -> { // lambda expression
             while (true) {
@@ -241,8 +227,10 @@ public class TaxiProcess {
                 switch (input) {
                     case "quit":
                         try {
-                            doExit();
+                            explicitClosure();
                         } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
 
@@ -253,7 +241,7 @@ public class TaxiProcess {
                             System.out.println("⚡️ I can't recharge, I'm quitting");
                         else {
                             try {
-                                recharge();
+                                rechargeTaxiBattery();
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -268,14 +256,15 @@ public class TaxiProcess {
 
     }
 
-    private static void recharge() throws InterruptedException {
-        System.out.println("election in corso: " + TaxiIstance.getInstance().isInElection()); // debug
+    private static void rechargeTaxiBattery() throws InterruptedException {
+        System.out.println("\n♻️🔋 RECHARGE Taxi requested...");
 
+        // if a Taxi is in an election process, can't quit
         if (TaxiIstance.getInstance().isInElection()) {
             synchronized (TaxiIstance.getInstance().getElectionLock()) {
                 while (TaxiIstance.getInstance().isInElection()) {
                     try {
-                        System.out.println("⏹🗳 I can't recharge, I'm inside an election...WAIT");
+                        System.out.println("⏹🗳 I can't recharge, I'm inside an ELECTION...WAIT");
                         TaxiIstance.getInstance().getElectionLock().wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -285,25 +274,20 @@ public class TaxiProcess {
             }
         }
 
+        // if a Taxi is in a Ride process, can't quit
         if (TaxiIstance.getInstance().isInRide()) {
-
-            // se un taxi sta facendo la ride, non può quittare
-            //System.out.println("isDelivering: " + DroneSingleton.getInstance().isDelivering()); // debug
             synchronized (TaxiIstance.getInstance().getRideLock()) {
                 while (TaxiIstance.getInstance().isInRide()) {
                     try {
-                        System.out.println("⏹🚚 I can't recharge, I'm delivering...WAIT");
+                        System.out.println("⏹🚕 I can't recharge, I'm in a RIDE...WAIT");
                         TaxiIstance.getInstance().getRideLock().wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                System.out.println("⏹🚚️ I'm not delivering anymore.");
+                System.out.println("⏹🚕 I'm not riding anymore.");
             }
         }
-
-
-
 
         TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 
@@ -313,11 +297,12 @@ public class TaxiProcess {
         Date date = new Date();
         long timestamp = date.getTime(); // timestamp in ms
 
-        Position newTaxiPosition = TaxiIstance.getInstance().getMyTaxi().getPosition();;
+        Position newTaxiPosition = TaxiIstance.getInstance().getMyTaxi().getPosition();
+
         int updateBatteryLevel = 100;
 
         if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
-            System.out.println("♻️ 🪫️ RECHARGE station in " + TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition() + " district WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+            System.out.println("♻️🪫️ RECHARGE station in " + TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition() + " district WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
             // recharge
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -366,7 +351,7 @@ public class TaxiProcess {
                         }
 
                         if (countElection == taxiList.size() - 1) {
-                            System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                             // recharge
                             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -374,9 +359,6 @@ public class TaxiProcess {
                             System.out.println("⚡️ Charging...");
                             Thread.sleep(10000); // 10 seconds
                             System.out.println("⚡️ Battery completed...");
-
-
-                            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
 
                             ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
                             newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
@@ -389,22 +371,19 @@ public class TaxiProcess {
                             System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                         }
                     } catch (Exception e) {
-                        //System.out.println("ERRORE: " + e.getMessage());
-                        System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                        System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }
                     channel.shutdownNow();
                 }
-
             }
         }
 
-        // set new batteryLevel, position, kmTravelled, numberRides
+        // set new batteryLevel, position
         TaxiIstance.getInstance().getMyTaxi().setBatteryLevel(updateBatteryLevel);
         TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
 
         // update other taxi with my new data
-
         if (taxiList.size() == 1) {
             System.out.println("🚖 I'm the only Taxi, I don't update anyone!");
         } else {
@@ -438,8 +417,7 @@ public class TaxiProcess {
                         response = stub.notifyTaxisAfterRide(request);
                         //System.out.println(response);
                     } catch (Exception e) {
-                        System.out.println("⚠️ TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
-
+                        System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }
                     channel.shutdownNow();
@@ -449,64 +427,69 @@ public class TaxiProcess {
         }
     }
 
-    public static void doExit() throws IOException {
+    public static void explicitClosure() throws IOException, InterruptedException {
+        /*
+            1. complete the possible ride it is involved in, sending to the Administra-
+                tor Server the information described in Section 5.2.2
+            2. complete any battery recharge
+            3. notify the other taxis of the smart city
+            4. request the Administrator Server to leave the smart city
+         */
+
 
         if (TaxiIstance.getInstance().isInExit()) {
             return;
         }
         TaxiIstance.getInstance().setInExit(true);
 
-        //System.out.println("doExit()");
-        System.out.println("\n⏹ STOPPING everything...");
+        System.out.println("\n⏹ STOPPING Taxi...");
 
-        // se un taxi è in election, non può quittare
-        System.out.println("election in corso: " + TaxiIstance.getInstance().isInElection()); // debug
+        // if a Taxi is in an election process, can't quit
         synchronized (TaxiIstance.getInstance().getElectionLock()) {
             while (TaxiIstance.getInstance().isInElection()) {
                 try {
-                    System.out.println("⏹🗳 I can't quit, I'm inside an election...WAIT");
+                    System.out.println("⏹🗳 I can't quit, I'm inside an ELECTION... WAIT");
                     TaxiIstance.getInstance().getElectionLock().wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("⏹🗳 I'm not inside an election anymore.");
+            System.out.println("⏹🗳 I'm not inside an election anymore");
         }
 
-        // se un taxi sta facendo la ride, non può quittare
-        //System.out.println("isDelivering: " + DroneSingleton.getInstance().isDelivering()); // debug
+        // if a Taxi is in a ride, can't quit
         synchronized (TaxiIstance.getInstance().getRideLock()) {
             while (TaxiIstance.getInstance().isInRide()) {
                 try {
-                    System.out.println("⏹🚚 I can't quit, I'm delivering...WAIT");
+                    System.out.println("⏹🚕 I can't quit, I'm in a RIDE... WAIT");
                     TaxiIstance.getInstance().getRideLock().wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("⏹🚚️ I'm not delivering anymore.");
+            System.out.println("⏹🚕 I'm not RIDING anymore.");
         }
 
+        // complete recharge
+        rechargeTaxiBattery();
 
-        // 4.4 disconnettersi dal BROKER
+
+        // disconnection with BROKER
         taxiPubSub.disconnectClient();
 
-        // 4.7 inviare al server le statistiche globali della smart city
-        System.out.println("⏹ Sending last stats to the REST Server...");
+        // Send stats ti REST server
+        System.out.println("⏹ Sending last stats to the REST Server StatisticService...");
         sendStatsToServer();
 
-
-        // 4.2 + 4.6 chiudere le comunicazioni (channel grpc) con gli altri taxi
-        // le chiudo già ogni volta che le uso
-
+        // close communication (chennal grpc) with other Taxi
         System.out.println("⏹ Shutting down the Grpc Server...");
         try {
             grpc.shutdownNow();
         } catch (Exception e) {
-            System.out.println("Errore nella chiusura del server: " + e);
+            System.out.println("Error in closing server: " + e);
         }
 
-        // 4.3 comunicare l'uscita al server (REST)
+        // communication with Server REST
         System.out.println("⏹ Contacting the REST Server...");
         int id = TaxiIstance.getInstance().getMyTaxi().getId();
         try {
@@ -531,12 +514,81 @@ public class TaxiProcess {
 
         // 5. SUPER USCITA
         System.exit(0);
-
     }
 
+    private static void startStatisticsToServer() {
+        System.out.println("📊 Starting sending statistics to the SERVER...");
+
+        new Thread(() -> {
+            while (true) {
+                sendStatsToServer();
+                try {
+                    Thread.sleep(15000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
     private static void sendStatsToServer() {
-        // TODO: inviare statistica al server
         System.out.println("inviare statistiche al server, da fare");
+
+        String url = BASE_URL + "statistic/add";
+
+        Client client = Client.create();
+        WebResource webResource = client.resource(url);
+        ClientResponse response;
+        JSONArray output = null;
+
+        Date date = new Date();
+        long actualTime = date.getTime(); // timestamp in ms
+
+        ArrayList<Double> lis = new ArrayList<Double>(
+        );
+
+        for (Measurement measurement : TaxiIstance.getInstance().getAverageListPollutionMeasurements()
+        ) {
+            lis.add(measurement.getValue());
+
+
+        }
+
+
+        try {
+
+
+            Statistic s = new Statistic(
+                    TaxiIstance.getInstance().getNumberRides(),
+                    TaxiIstance.getInstance().getKmTravelled(),
+                    lis,
+                    TaxiIstance.getInstance().getMyTaxi().getBatteryLevel(),
+                    actualTime,
+                    TaxiIstance.getInstance().getMyTaxi().getId()
+            );
+
+            String input = new Gson().toJson(s);
+
+            System.out.println(input);
+
+
+            response = webResource.type("application/json").post(ClientResponse.class, input);
+
+            if (response.getStatus() == 201) {
+                output = response.getEntity(JSONArray.class);
+
+                System.out.println(output);
+
+
+            } else {
+                System.out.println("Server error in POST statistic/add");
+            }
+
+
+        } catch (Exception e) {
+            System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
+        }
+
+
     }
 }

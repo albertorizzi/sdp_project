@@ -24,19 +24,30 @@ public class StatisticService {
     @Consumes({"application/json", "application/xml"})
     @Produces({"application/json", "application/xml"})
     public Response addStatistic(Statistic statistic) {
-        Statistics.getInstance().add(
-                new Statistic(statistic.getNumberRides(),
-                        statistic.getKmTravelled(),
-                        statistic.getPollutionAverage(),
-                        statistic.getBatteryLevel(),
-                        statistic.getTimestamp(),
-                        statistic.getIdTaxi())
-        );
+
+        System.out.println(statistic.toString());
+
+        Statistics.getInstance().add(statistic);
 
         String message = "{\"message\": \"statistic_add\", \"taxi\": " + statistic.getIdTaxi() + " }";
         return Response.status(Response.Status.CREATED).entity(message).build();
     }
 
 
-    // ultime n statistiche di taxi con id
+    // last n statistics of taxi wit determinate id
+    // http://localhost:1337/statistic/4/taxi/465
+    @Path("{nLastStat}/taxi/{idTaxi}")
+    @GET
+    @Consumes({"application/json", "application/xml"})
+    @Produces({"application/json", "application/xml"})
+    public Response getLastNStatisticsOfDeterminatedIdTaxi(@PathParam("nLastStat") int lastNStat, @PathParam("idTaxi") int idTaxi) {
+        // check size lenght of Statistic
+        if (Statistics.getInstance().getStatisticList().size() == 0) {
+            return Response.status(Response.Status.NO_CONTENT).entity("{\"message\": \"NO_STATISTICS.\"}").build();
+        } else if (Statistics.getInstance().getStatisticList().size() < lastNStat) {
+            return Response.status(Response.Status.NO_CONTENT).entity("{\"message\": \"SIZE_STATISTICS_LOWER_THAN_LAST_N_STAT.\"}").build();
+        } else {
+            return Response.ok(Statistics.getInstance().getNStatistics(lastNStat, idTaxi)).build();
+        }
+    }
 }

@@ -1,21 +1,24 @@
 package AdministratorServer.Model;
 
+import Pollution.Measurement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement
 public class Statistic {
 
     private int numberRides;
     private int kmTravelled;
-    private float pollutionAverage;
-    private int batteryLevel;
+    private ArrayList<Double> pollutionAverage;
+    private Integer batteryLevel;
     private long timestamp;
     private int idTaxi;
 
     // empty constructor
     public Statistic(){};
 
-    public Statistic(int numberRides, int kmTravelled, float pollutionAverage, int batteryLevel, long timestamp, int idTaxi) {
+    public Statistic(int numberRides, int kmTravelled, ArrayList<Double> pollutionAverage, int batteryLevel, long timestamp, int idTaxi) {
         this.numberRides = numberRides;
         this.kmTravelled = kmTravelled;
         this.pollutionAverage = pollutionAverage;
@@ -40,11 +43,11 @@ public class Statistic {
         this.kmTravelled = kmTravelled;
     }
 
-    public float getPollutionAverage() {
+    public ArrayList<Double> getPollutionAverage() {
         return pollutionAverage;
     }
 
-    public void setPollutionAverage(float pollutionAverage) {
+    public void setPollutionAverage(ArrayList<Double> pollutionAverage) {
         this.pollutionAverage = pollutionAverage;
     }
 
@@ -70,5 +73,21 @@ public class Statistic {
 
     public void setIdTaxi(int idTaxi) {
         this.idTaxi = idTaxi;
+    }
+
+    public void setBatteryLevel(Integer batteryLevel) {
+        this.batteryLevel = batteryLevel;
+    }
+
+    @Override
+    public String toString() {
+        return "Statistic{" +
+                "numberRides=" + numberRides +
+                ", kmTravelled=" + kmTravelled +
+                ", pollutionAverage=" + pollutionAverage +
+                ", batteryLevel=" + batteryLevel +
+                ", timestamp=" + timestamp +
+                ", idTaxi=" + idTaxi +
+                '}';
     }
 }

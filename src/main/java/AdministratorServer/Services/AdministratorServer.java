@@ -50,7 +50,7 @@ public class AdministratorServer {
             return Response.status(Response.Status.CONFLICT).entity(message).build();
         } else {
             Taxis.getInstance().add(taxi);
-           return Response.status(Response.Status.OK).entity(Taxis.getInstance().getTaxisList()).build();
+           return Response.status(Response.Status.CREATED).entity(Taxis.getInstance().getTaxisList()).build();
          //   return Response.ok(Taxis.getInstance().getTaxisList()).build();
 
 

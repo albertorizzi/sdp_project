@@ -32,8 +32,8 @@ public class SetaPubSub {
 
         //subscriber
         ArrayList<String> subTopicArray = new ArrayList<String>() {{
-            add("seta/smartcity/rides/*/accomplished");
-            add("seta/smartcity/rides/*/unaccomplished");
+            add("seta/smartcity/accomplished/ride/#");
+            add("seta/smartcity/unaccomplished/ride/#");
         }};
         int subQos = 2;
 

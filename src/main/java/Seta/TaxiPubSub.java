@@ -138,7 +138,6 @@ public class TaxiPubSub extends Thread {
 
                                             System.out.println("NON GESTISCO IO LA RIDE: " + ride.getIDRide() + " nel district: " + ride.getStartPosition().getDistrictByPosition());
 
-                                            break;
                                         }
 
 
@@ -207,7 +206,7 @@ public class TaxiPubSub extends Thread {
         5. setRiding a false
     */
     private void taxiTakesRide(Ride ride) throws MqttException, InterruptedException {
-        //  System.out.println("Gestisco io la corsa" + ride);
+        System.out.println("🗾 I manage RIDE " + ride);
         TaxiIstance.getInstance().setInRide(true);
 
         // Notifico che non sono più in un'elezione con il notify
@@ -219,7 +218,7 @@ public class TaxiPubSub extends Thread {
         MqttMessage payload = new MqttMessage(ride.toJsonString().getBytes()); // getBytes converts message in binary
 
         // TOPIC example: "seta/smartcity/rides/15/accomplished"
-        client.publish("seta/smartcity/rides/" + ride.getIDRide() + "/accomplished", payload);
+        client.publish("seta/smartcity/accomplished/ride/" + ride.getIDRide(), payload);
 
         // 5 seconds to manage ride
         Thread.sleep(5000);
@@ -299,7 +298,8 @@ public class TaxiPubSub extends Thread {
                             if (response.getMessageResponse().equals("OK")) {
                                 countElection++;
                             } else if (response.getMessageResponse().equals("NO")) {
-                                break;
+
+
                             }
 
                             if (countElection == taxiList.size() - 1) {
@@ -340,6 +340,7 @@ public class TaxiPubSub extends Thread {
         TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
         TaxiIstance.getInstance().addKmTravelled(kmRide);
         TaxiIstance.getInstance().addNumberRides();
+        TaxiIstance.getInstance().setIdRideOnRoad(ride.getIDRide());
 
 
         // update other taxi with my new data
@@ -402,8 +403,10 @@ public class TaxiPubSub extends Thread {
             System.out.println("🗺 SAME district: " + newTaxiPosition.getDistrictByPosition());
         }
 
-        // setRiding to false
+        // TODO: pubblicare su seta che mi sono liberato
 
+
+        // setRiding to false
         synchronized (TaxiIstance.getInstance().getRideLock()) {
             TaxiIstance.getInstance().setInRide(false);
             TaxiIstance.getInstance().getRideLock().notify();

@@ -10,6 +10,7 @@ import com.sun.javafx.scene.traversal.SubSceneTraversalEngine;
 import io.grpc.stub.StreamObserver;
 
 import java.util.Date;
+import java.util.PrimitiveIterator;
 
 public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
     @Override
@@ -47,7 +48,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
             1. the Taxi must not be already involved in another ride or a recharge process
             2. the Taxi must have the minimum distance from the starting point of the ride
             3. the Taxi must have the highest battery level
-            4. Il taxi deve avere ID più grande
+            4. the Taxi must have better id
         */
         GrpcServiceOuterClass.RideElectionResponse response = null;
 
@@ -64,6 +65,11 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
             //TODO: va tolto? forse perchè tanto viene controllato di là?
             if (!TaxiIstance.getInstance().isInRide() && !TaxiIstance.getInstance().isInCharge() && !TaxiIstance.getInstance().isInElection()) {
                 System.out.println("PARTECIPO ELEZIONE");
+
+                System.out.println("startPositionRide " + startPositionRide);
+                System.out.println("TaxiIstance.getInstance().getPositionOfTaxi(request.getIdTaxi()) " + TaxiIstance.getInstance().getPositionOfTaxi(request.getIdTaxi()));
+                System.out.println("axiIstance.getInstance().getMyTaxi().getPosition() " + TaxiIstance.getInstance().getMyTaxi().getPosition());
+
 
 
                 // comparison distances between Taxi position request and my position
@@ -172,12 +178,23 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
                 System.out.println("NON PARTECIPO ELEZIONE");
 
-                response = GrpcServiceOuterClass.RideElectionResponse
-                        .newBuilder()
-                        .setIdRide(request.getIdRide())
-                        .setIdTaxi(request.getIdTaxi())
-                        .setMessageElection("OK")
-                        .build();
+                if (TaxiIstance.getInstance().getIdRideOnRoad() == request.getIdRide()) {
+                    System.out.println("Sto già gestendo io la corsa");
+
+                    response = GrpcServiceOuterClass.RideElectionResponse
+                            .newBuilder()
+                            .setIdRide(request.getIdRide())
+                            .setIdTaxi(request.getIdTaxi())
+                            .setMessageElection("NO")
+                            .build();
+                } else {
+                    response = GrpcServiceOuterClass.RideElectionResponse
+                            .newBuilder()
+                            .setIdRide(request.getIdRide())
+                            .setIdTaxi(request.getIdTaxi())
+                            .setMessageElection("OK")
+                            .build();
+                }
             }
         } else {
             // OK because startPosition is in another district

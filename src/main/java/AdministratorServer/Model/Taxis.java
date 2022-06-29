@@ -62,4 +62,17 @@ public class Taxis {
         }
         return false;
     }
+
+    public synchronized boolean checkTaxiIsAlreadyPresentById(int idTaxi) {
+        // true - exist
+        // false - NOT exist
+
+        List<Taxi> taxisListCopy = getTaxisList();
+        for (Taxi singleTaxi : taxisListCopy) {
+            if (singleTaxi.getId() == idTaxi) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

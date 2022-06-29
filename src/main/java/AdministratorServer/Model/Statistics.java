@@ -1,11 +1,14 @@
 package AdministratorServer.Model;
 
 import Pollution.Measurement;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,14 +42,13 @@ public class Statistics {
         return statisticList;
     }
 
-    public synchronized ArrayList<Float> getNStatistics(int numberStatistics, int idTaxi) {
-        int fromIndex = statisticList.size() - numberStatistics;
-        int toIndex = statisticList.size();
-
-
+    public synchronized String getNStatistics(int numberStatistics, int idTaxi) throws JSONException {
         List<Statistic> statisticListFilteredByIdTaxi = statisticList.stream().filter(stat ->
                         stat.getIdTaxi() == idTaxi)
                 .collect(Collectors.toList());
+
+        int fromIndex = statisticListFilteredByIdTaxi.size() - numberStatistics;
+        int toIndex = statisticListFilteredByIdTaxi.size();
 
         statisticListFilteredByIdTaxi.subList(fromIndex, toIndex);
 
@@ -57,21 +59,20 @@ public class Statistics {
 
         float sumKmTravelled = 0;
         float sumBatteryLevel = 0;
-        float sumNumberRides = 0;
+
         List<Measurement> concatMeasurament = new ArrayList<>();
 
 
         for (Statistic statistic : statisticListFilteredByIdTaxi) {
             sumKmTravelled += statistic.getKmTravelled();
             sumBatteryLevel += statistic.getBatteryLevel();
-            sumNumberRides += statistic.getNumberRides();
 
             concatMeasurament.addAll(statistic.getPollutionAverage());
         }
 
-        kmTravelled = sumKmTravelled / statisticList.size();
-        batteryLevel = sumBatteryLevel / statisticList.size();
-        numberRides = sumNumberRides / statisticList.size();
+        kmTravelled = sumKmTravelled / statisticListFilteredByIdTaxi.size();
+        batteryLevel = sumBatteryLevel / statisticListFilteredByIdTaxi.size();
+        numberRides = statisticListFilteredByIdTaxi.get(statisticListFilteredByIdTaxi.size() - 1).getNumberRides();
 
         float sumPollution = 0;
 
@@ -79,18 +80,71 @@ public class Statistics {
             sumPollution += measurement.getValue();
         }
 
-        pollutionLevel = sumPollution / concatMeasurament.size();
+        if (concatMeasurament.size() == 0) { // to manage if size is 0
+            pollutionLevel = 0;
+        } else {
+            pollutionLevel = sumPollution / concatMeasurament.size();
+        }
 
+        JSONObject response = new JSONObject();
 
-        ArrayList<Float> resultAverageNStat = new ArrayList<Float>();
-        resultAverageNStat.add(kmTravelled);
-        resultAverageNStat.add(batteryLevel);
-        resultAverageNStat.add(numberRides);
-        resultAverageNStat.add(pollutionLevel);
+        DecimalFormat df = new DecimalFormat("###.####");
 
-        return resultAverageNStat;
+        response.put("kmTravelled", df.format(kmTravelled));
+        response.put("batteryLevel", df.format(batteryLevel));
+        response.put("numberRides", df.format(numberRides));
+        response.put("pollutionLevel", df.format(pollutionLevel));
 
+        return response.toString();
     }
 
+    public synchronized String getStatisticsBetweenTimestamp(long timestampStart, long timestampEnd) throws JSONException {
+        List<Statistic> statisticListFilteredByTimestamp = statisticList.stream().filter(
+                        stat -> stat.getTimestamp() > timestampStart && stat.getTimestamp() < timestampEnd)
+                .collect(Collectors.toList());
 
+        float kmTravelled;
+        float batteryLevel;
+        float numberRides;
+        float pollutionLevel;
+
+        float sumKmTravelled = 0;
+        float sumBatteryLevel = 0;
+
+        List<Measurement> concatMeasurament = new ArrayList<>();
+
+        for (Statistic statistic : statisticListFilteredByTimestamp) {
+            sumKmTravelled += statistic.getKmTravelled();
+            sumBatteryLevel += statistic.getBatteryLevel();
+
+            concatMeasurament.addAll(statistic.getPollutionAverage());
+        }
+
+        kmTravelled = sumKmTravelled / statisticListFilteredByTimestamp.size();
+        batteryLevel = sumBatteryLevel / statisticListFilteredByTimestamp.size();
+        numberRides = statisticListFilteredByTimestamp.get(statisticListFilteredByTimestamp.size() - 1).getNumberRides();
+
+        float sumPollution = 0;
+
+        for (Measurement measurement : concatMeasurament) {
+            sumPollution += measurement.getValue();
+        }
+
+        if (concatMeasurament.size() == 0) { // to manage if size is 0
+            pollutionLevel = 0;
+        } else {
+            pollutionLevel = sumPollution / concatMeasurament.size();
+        }
+
+        JSONObject response = new JSONObject();
+
+        DecimalFormat df = new DecimalFormat("###.####");
+
+        response.put("kmTravelled", df.format(kmTravelled));
+        response.put("batteryLevel", df.format(batteryLevel));
+        response.put("numberRides", df.format(numberRides));
+        response.put("pollutionLevel", df.format(pollutionLevel));
+
+        return response.toString();
+    }
 }

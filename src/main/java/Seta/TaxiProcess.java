@@ -75,7 +75,7 @@ public class TaxiProcess {
 
                 success = true;
             } catch (Exception e) {
-                System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
+                System.out.println("registrationMethod - Error (IOException): " + e.getMessage());
             }
         }
 
@@ -532,36 +532,24 @@ public class TaxiProcess {
     }
 
     private static void sendStatsToServer() {
-        System.out.println("inviare statistiche al server, da fare");
+        System.out.println("\n" + "⬆️ 📊 Send STATISTIC to Server");
 
         String url = BASE_URL + "statistic/add";
 
         Client client = Client.create();
         WebResource webResource = client.resource(url);
         ClientResponse response;
-        JSONArray output = null;
+        String output = null;
 
         Date date = new Date();
         long actualTime = date.getTime(); // timestamp in ms
 
-        ArrayList<Double> lis = new ArrayList<Double>(
-        );
-
-        for (Measurement measurement : TaxiIstance.getInstance().getAverageListPollutionMeasurements()
-        ) {
-            lis.add(measurement.getValue());
-
-
-        }
-
 
         try {
-
-
             Statistic s = new Statistic(
                     TaxiIstance.getInstance().getNumberRides(),
                     TaxiIstance.getInstance().getKmTravelled(),
-                    lis,
+                    TaxiIstance.getInstance().getAverageListPollutionMeasurements(),
                     TaxiIstance.getInstance().getMyTaxi().getBatteryLevel(),
                     actualTime,
                     TaxiIstance.getInstance().getMyTaxi().getId()
@@ -569,26 +557,20 @@ public class TaxiProcess {
 
             String input = new Gson().toJson(s);
 
-            System.out.println(input);
-
-
             response = webResource.type("application/json").post(ClientResponse.class, input);
 
             if (response.getStatus() == 201) {
-                output = response.getEntity(JSONArray.class);
+                output = response.getEntity(String.class);
+                JSONObject jsonObject = new JSONObject(output);
+                int idTaxi = jsonObject.getInt("taxi");
 
-                System.out.println(output);
-
-
+                System.out.println("📊 Stats of " + idTaxi + " saved correctly");
             } else {
                 System.out.println("Server error in POST statistic/add");
             }
 
-
         } catch (Exception e) {
-            System.out.println("registrationMethod 1 - Error (IOException): " + e.getMessage());
+            System.out.println("sendStatsToServer - Error (IOException): " + e.getMessage());
         }
-
-
     }
 }

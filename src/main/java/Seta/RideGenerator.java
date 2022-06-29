@@ -98,7 +98,7 @@ public class RideGenerator extends Thread {
                 System.out.println("🗺 POSITION: start -> " + actualDistrict + ", destination -> " + ride.getDestinationPosition().getDistrictByPosition());
                 client.publish(topic + actualDistrict, message);
 
-                Thread.sleep(8000); // TODO: check 5000
+                Thread.sleep(5000); // TODO: check 5000
             } catch (MqttException | InterruptedException e) {
                 e.printStackTrace();
             }

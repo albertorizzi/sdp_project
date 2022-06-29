@@ -51,18 +51,19 @@ public class QueueManager extends Thread {
         try {
 
             client.setCallback(new MqttCallback() {
+                // seta/smartcity/accomplished/ride/#
+
                 // 1. messageArrived
                 // ricezione di un msg su uno specifico topic sul quale eravamo sottoscritti
                 public void messageArrived(String topic, MqttMessage message) throws JSONException {
+                    System.out.println(topic);
                     String[] splitTopic = topic.split("/");
-                    int idRide = Integer.parseInt(splitTopic[splitTopic.length - 2]);
+                    int idRide = Integer.parseInt(splitTopic[splitTopic.length - 1]);
 
-
-                    if (splitTopic[splitTopic.length - 1].equals("accomplished")) {
-                        System.out.println("Presa in carico corsa " + idRide + "e tolta da rideQueue");
+                    if (splitTopic[splitTopic.length - 3].equals("accomplished")) {
+                        System.out.println("Presa in carico corsa " + idRide + " e tolta da rideQueue");
                         Rides.getInstance().remove(idRide);
-                    } else if (splitTopic[splitTopic.length - 1].equals("unaccomplished")) {
-                        System.out.println("unaccomplished " + idRide);
+                        System.out.println(Rides.getInstance().getRidesQueue());
                     }
                 }
 
@@ -82,9 +83,12 @@ public class QueueManager extends Thread {
 
             System.out.println("🚚 Subscribed to topics : " + subTopicArray);
 
-            for (String s : subTopicArray) {
+        /*    for (String s : subTopicArray) {
                 client.subscribe(s, subQos);
-            }
+            }*/
+
+            client.subscribe(subTopicArray.get(0), subQos);
+            client.subscribe(subTopicArray.get(1), subQos);
 
 
         } catch (MqttException e) {
@@ -94,7 +98,7 @@ public class QueueManager extends Thread {
 
     }
 
-    public static void disconnectClient(){
+    public static void disconnectClient() {
         //System.out.println("disconnectClient()");
         try {
             client.disconnect();

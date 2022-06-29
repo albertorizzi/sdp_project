@@ -1,6 +1,7 @@
 package AdministratorServer.Model;
 
 import Pollution.Measurement;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,15 +11,18 @@ public class Statistic {
 
     private int numberRides;
     private int kmTravelled;
-    private ArrayList<Double> pollutionAverage;
-    private Integer batteryLevel;
+    private ArrayList<Measurement> pollutionAverage;
+    private int batteryLevel;
     private long timestamp;
     private int idTaxi;
 
     // empty constructor
-    public Statistic(){};
+    public Statistic() {
+    }
 
-    public Statistic(int numberRides, int kmTravelled, ArrayList<Double> pollutionAverage, int batteryLevel, long timestamp, int idTaxi) {
+    ;
+
+    public Statistic(int numberRides, int kmTravelled, ArrayList<Measurement> pollutionAverage, int batteryLevel, long timestamp, int idTaxi) {
         this.numberRides = numberRides;
         this.kmTravelled = kmTravelled;
         this.pollutionAverage = pollutionAverage;
@@ -43,11 +47,11 @@ public class Statistic {
         this.kmTravelled = kmTravelled;
     }
 
-    public ArrayList<Double> getPollutionAverage() {
+    public ArrayList<Measurement> getPollutionAverage() {
         return pollutionAverage;
     }
 
-    public void setPollutionAverage(ArrayList<Double> pollutionAverage) {
+    public void setPollutionAverage(ArrayList<Measurement> pollutionAverage) {
         this.pollutionAverage = pollutionAverage;
     }
 
@@ -75,9 +79,6 @@ public class Statistic {
         this.idTaxi = idTaxi;
     }
 
-    public void setBatteryLevel(Integer batteryLevel) {
-        this.batteryLevel = batteryLevel;
-    }
 
     @Override
     public String toString() {

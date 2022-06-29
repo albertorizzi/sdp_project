@@ -7,12 +7,18 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
+import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Scanner;
 
 public class AdministratorClient {
-    // TODO: da implementare
+    // TODO: da terminare
+
+    static Client client = Client.create();
+    static String url;
+    static WebResource webResource;
+    static ClientResponse response;
 
     public static void main(String[] args) {
 
@@ -37,11 +43,10 @@ public class AdministratorClient {
                 case 1:
                     System.out.println("1. List of taxis 🚖");
 
-                    Client client = Client.create();
-                    String url = "http://localhost:1337/taxi/all";
-                    WebResource webResource = client.resource(url);
+                    url = "http://localhost:1337/taxi/all";
+                    webResource = client.resource(url);
 
-                    ClientResponse response = webResource.type("application/json").get(ClientResponse.class);
+                    response = webResource.type("application/json").get(ClientResponse.class);
 
                     if (response.getStatus() == 200) {
                         Gson gson = new Gson();
@@ -51,7 +56,7 @@ public class AdministratorClient {
                             System.out.println(taxi.toString());
                         }
                     } else {
-                        System.out.println("Server error: retry");
+                        System.out.println("SERVER ERROR: listOfTaxi");
                     }
 
                     break;
@@ -67,13 +72,51 @@ public class AdministratorClient {
                     } while (numberStatistic <= 0);
 
                     System.out.println("2. Average last " + numberStatistic + " statistics of Taxi " + idTaxi);
+
+                    // example http://localhost:1337/statistic/1/taxi/992
+                    String url = "http://localhost:1337/statistic/" + numberStatistic + "/taxi/" + idTaxi;
+                    webResource = client.resource(url);
+
+                    response = webResource.type("application/json").get(ClientResponse.class);
+
+                    if (response.getStatus() == 200 || response.getStatus() == 404) {
+                        System.out.println(response.getEntity(String.class));
+                    } else {
+                        System.out.println("SERVER ERROR: last n statistics");
+                    }
                     break;
 
 
                 case 3:
                     System.out.println("3. Average statistics of all taxis between timestamp T1 and T2");
 
+                    String timestamp1;
+                    String timestamp2;
+                    boolean digitizing = true;
+                    do {
+                        System.out.println("Insert T1");
+                        timestamp1 = in.next();
+
+                        System.out.println("Insert T2");
+                        timestamp2 = in.next();
+                        digitizing = false;
+                    } while (digitizing);
+
+                    // example http://localhost:1337/statistic/timestamp/000-000
+                    url = "http://localhost:1337/statistic/timestamp/" + timestamp1 + "-" + timestamp2;
+
+                    webResource = client.resource(url);
+
+                    response = webResource.type("application/json").get(ClientResponse.class);
+
+                    if (response.getStatus() == 200) {
+                        System.out.println(response.getEntity(String.class));
+                    } else {
+                        System.out.println("SERVER ERROR: last n statistics");
+                    }
                     break;
+
+
                 default:
                     System.out.println("Selection not valid");
             }

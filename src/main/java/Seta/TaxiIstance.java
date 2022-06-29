@@ -25,6 +25,9 @@ public class TaxiIstance {
     private Object rideLock = new Object(); // lock durante ride
     private Object electionLock = new Object(); // lock durante election
 
+    private int idRideOnRoad;
+    private int idRideInElection;
+
     enum RechargeStatus {
         BATTERY_REQUESTED,
         BATTERY_IN_USED,
@@ -106,6 +109,10 @@ public class TaxiIstance {
         Taxi taxi = taxiList.stream().filter(t ->
                 t.getId() == taxiId).findFirst().orElse(null);
 
+        System.out.println(position);
+        System.out.println(position.getDistrictByPosition());
+
+
         taxi.setPosition(position);
         taxi.setBatteryLevel(batteryLevel);
     }
@@ -176,5 +183,21 @@ public class TaxiIstance {
 
     public Object getElectionLock() {
         return electionLock;
+    }
+
+    public int getIdRideOnRoad() {
+        return idRideOnRoad;
+    }
+
+    public void setIdRideOnRoad(int idRideOnRoad) {
+        this.idRideOnRoad = idRideOnRoad;
+    }
+
+    public int getIdRideInElection() {
+        return idRideInElection;
+    }
+
+    public void setIdRideInElection(int idRideInElection) {
+        this.idRideInElection = idRideInElection;
     }
 }

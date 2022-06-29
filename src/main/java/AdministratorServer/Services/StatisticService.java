@@ -26,9 +26,6 @@ public class StatisticService {
     @Consumes({"application/json"})
     @Produces({"application/json", "application/xml"})
     public Response addStatistic(Statistic statistic) {
-
-        System.out.println(statistic.toString());
-
         Statistics.getInstance().add(statistic);
 
         String message = "{\"message\": \"statistic_add\", \"taxi\": " + statistic.getIdTaxi() + " }";
@@ -66,15 +63,25 @@ public class StatisticService {
     @Produces({"application/json", "application/xml"})
     public Response getStatisticsBetweenTimestamp(@PathParam("timestamp") String timestamp) throws JSONException {
 
-        if(Statistics.getInstance().getStatisticList().size() == 0){
-            return Response.status(Response.Status.NO_CONTENT).entity("{\"message\": \"NO_STATSTICS.\"}").build();
+        if (Statistics.getInstance().getStatisticList().size() == 0) {
+            return Response.status(Response.Status.NO_CONTENT).entity("{\"message\": \"NO_STATISTICS.\"}").build();
         } else {
-            //System.out.println("StatisticsServices " + t); // debug
             long t1 = Long.parseLong(timestamp.split("-")[0]);
             long t2 = Long.parseLong(timestamp.split("-")[1]);
-            System.out.println("StatisticsServices " + t1); // debug
-            System.out.println("StatisticsServices " + t2); // debug
+
             return Response.ok(Statistics.getInstance().getStatisticsBetweenTimestamp(t1, t2)).build();
+        }
+    }
+
+    @Path("/timestamp")
+    @GET
+    @Produces({"application/json", "application/xml"})
+    public Response getTimestamp() throws JSONException {
+
+        if (Statistics.getInstance().getStatisticList().size() == 0) {
+            return Response.status(Response.Status.NO_CONTENT).entity("{\"message\": \"NO_STATISTICS.\"}").build();
+        } else {
+            return Response.ok(Statistics.getInstance().getTimestamp()).build();
         }
     }
 }

@@ -55,6 +55,7 @@ public class TaxiPubSub extends Thread {
             client = new MqttClient(broker, clientId);
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
+            connOpts.setMaxInflight(200);
 
             client.connect(connOpts); //sincrono
 
@@ -92,7 +93,9 @@ public class TaxiPubSub extends Thread {
                     if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
                         System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
                     } else {
-                        System.out.println("dentro esle");
+                        TaxiIstance.getInstance().setInElection(true);
+                        TaxiIstance.getInstance().setIdRideInElection(ride.getIDRide());
+
                         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
                         int countElection = 0;
 
@@ -126,7 +129,7 @@ public class TaxiPubSub extends Thread {
                                     GrpcServiceOuterClass.RideElectionResponse response;
                                     try {
                                         response = stub.election(request);
-                                        System.out.println(response);
+
 
                                         if (response.getMessageElection().equals("OK")) {
                                             countElection++;
@@ -142,18 +145,15 @@ public class TaxiPubSub extends Thread {
 
 
                                         if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
-                                            System.out.println(countElection);
-
-
-                                            System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                                            System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by ME -> Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                                             taxiTakesRide(ride);
                                         } else {
                                             System.out.println("🚕 NOT manage ride " + ride.getIDRide());
                                         }
                                     } catch (Exception e) {
-                                        //System.out.println("ERRORE: " + e.getMessage());
-                                        System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                                        System.out.println("ERRORE: " + e.getMessage());
+                                        System.out.println("🔴 TaxiPubSub.RideElectionRequest - Non riesco a contattare il drone " + taxi.getId());
                                         TaxiIstance.getInstance().removeTaxi(taxi);
                                     }
                                     channel.shutdownNow();
@@ -208,6 +208,8 @@ public class TaxiPubSub extends Thread {
     private void taxiTakesRide(Ride ride) throws MqttException, InterruptedException {
         System.out.println("🗾 I manage RIDE " + ride);
         TaxiIstance.getInstance().setInRide(true);
+        TaxiIstance.getInstance().setIdRideOnRoad(ride.getIDRide());
+
 
         // Notifico che non sono più in un'elezione con il notify
         synchronized (TaxiIstance.getInstance().getElectionLock()) {
@@ -217,8 +219,9 @@ public class TaxiPubSub extends Thread {
 
         MqttMessage payload = new MqttMessage(ride.toJsonString().getBytes()); // getBytes converts message in binary
 
-        // TOPIC example: "seta/smartcity/rides/15/accomplished"
-        client.publish("seta/smartcity/accomplished/ride/" + ride.getIDRide(), payload);
+        // TOPIC example: "seta/smartcity/rides/accomplished/15"
+        client.publish("seta/smartcity/rides/accomplished/" + ride.getIDRide(), payload);
+
 
         // 5 seconds to manage ride
         Thread.sleep(5000);
@@ -238,7 +241,6 @@ public class TaxiPubSub extends Thread {
         // check if batteries is < 30 %
         // TODO: cambiare livello
         if (updateBatteryLevel < 30) {
-
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 
 
@@ -254,13 +256,13 @@ public class TaxiPubSub extends Thread {
                 // recharge
                 TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
 
+                System.out.println("⚡️ Charging...");
                 Thread.sleep(10000); // 10 seconds
+                System.out.println("⚡️ Battery completed...");
 
                 updateBatteryLevel = 100;
                 ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
                 newTaxiPosition = new Position(arr.get(0), arr.get(1));
-
-                System.out.println(newTaxiPosition);
 
                 synchronized (TaxiIstance.getInstance().getRechargeLock()) {
                     TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
@@ -308,9 +310,10 @@ public class TaxiPubSub extends Thread {
                                 // recharge
                                 TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
 
+                                System.out.println("⚡️ Charging...");
                                 Thread.sleep(10000); // 10 seconds
+                                System.out.println("⚡️ Battery completed...");
 
-                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
                                 updateBatteryLevel = 100;
                                 ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
                                 newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
@@ -323,8 +326,8 @@ public class TaxiPubSub extends Thread {
                                 System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                             }
                         } catch (Exception e) {
-                            //System.out.println("ERRORE: " + e.getMessage());
-                            System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
+                            System.out.println("ERRORE: " + e.getMessage());
+                            System.out.println("🔴 TaxiPubSub.taxiTakesRide - Non riesco a contattare il drone " + taxi.getId());
                             TaxiIstance.getInstance().removeTaxi(taxi);
                         }
                         channel.shutdownNow();
@@ -378,8 +381,8 @@ public class TaxiPubSub extends Thread {
                     GrpcServiceOuterClass.TaxiInfoAfterRideResponse response;
                     try {
                         response = stub.notifyTaxisAfterRide(request);
-                        //System.out.println(response);
                     } catch (Exception e) {
+                        System.out.println("ERRORE: " + e.getMessage());
                         System.out.println("⚠️ TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
 
                         TaxiIstance.getInstance().removeTaxi(taxi);
@@ -405,13 +408,21 @@ public class TaxiPubSub extends Thread {
 
         // TODO: pubblicare su seta che mi sono liberato
 
+        // I'm free, I advise SETA to public eventually a ride in my district
+
+        String payloadTaxiFree = String.valueOf(newTaxiPosition.getDistrictByPosition());
+        MqttMessage messageRide = new MqttMessage(payloadTaxiFree.getBytes());
+        messageRide.setQos(2);
+
+        client.publish("seta/smartcity/taxi/free/" + TaxiIstance.getInstance().getMyTaxi().getId(), messageRide);
+
 
         // setRiding to false
         synchronized (TaxiIstance.getInstance().getRideLock()) {
             TaxiIstance.getInstance().setInRide(false);
             TaxiIstance.getInstance().getRideLock().notify();
         }
-        System.out.println("🚕 Ride FINISHED");
+        System.out.println("🚕 Ride " + ride.getIDRide() + " FINISHED");
     }
 
     public static void disconnectClient() {

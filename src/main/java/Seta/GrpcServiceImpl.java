@@ -63,7 +63,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
             // check if taxi is busy in a ride or in recharging
 
             //TODO: va tolto? forse perchè tanto viene controllato di là?
-            if (!TaxiIstance.getInstance().isInRide() && !TaxiIstance.getInstance().isInCharge() && !TaxiIstance.getInstance().isInElection()) {
+            if (!TaxiIstance.getInstance().isInRide() && !TaxiIstance.getInstance().isInCharge() && TaxiIstance.getInstance().getIdRideInElection() == request.getIdRide()) {
                 System.out.println("PARTECIPO ELEZIONE");
 
                 System.out.println("startPositionRide " + startPositionRide);

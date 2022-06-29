@@ -47,6 +47,8 @@ public class Statistics {
                         stat.getIdTaxi() == idTaxi)
                 .collect(Collectors.toList());
 
+        System.out.println(statisticListFilteredByIdTaxi.size());
+
         int fromIndex = statisticListFilteredByIdTaxi.size() - numberStatistics;
         int toIndex = statisticListFilteredByIdTaxi.size();
 
@@ -144,6 +146,15 @@ public class Statistics {
         response.put("batteryLevel", df.format(batteryLevel));
         response.put("numberRides", df.format(numberRides));
         response.put("pollutionLevel", df.format(pollutionLevel));
+
+        return response.toString();
+    }
+
+    public synchronized String getTimestamp() throws JSONException {
+        JSONObject response = new JSONObject();
+
+        response.put("timestampStart", statisticList.get(0).getTimestamp());
+        response.put("timestampEnd", statisticList.get(statisticList.size()-1).getTimestamp());
 
         return response.toString();
     }

@@ -6,6 +6,7 @@ import AdministratorServer.Model.Taxi;
 import com.example.taxis.GrpcServiceGrpc;
 import com.example.taxis.GrpcServiceOuterClass;
 import com.google.gson.Gson;
+import com.sun.javafx.scene.traversal.SubSceneTraversalEngine;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -371,6 +372,7 @@ public class TaxiProcess {
                             System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                         }
                     } catch (Exception e) {
+                        System.out.println(e.getMessage());
                         System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }
@@ -382,6 +384,8 @@ public class TaxiProcess {
         // set new batteryLevel, position
         TaxiIstance.getInstance().getMyTaxi().setBatteryLevel(updateBatteryLevel);
         TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
+
+        System.out.println("🔋 Battery Level: " + updateBatteryLevel);
 
         // update other taxi with my new data
         if (taxiList.size() == 1) {
@@ -417,6 +421,7 @@ public class TaxiProcess {
                         response = stub.notifyTaxisAfterRide(request);
                         //System.out.println(response);
                     } catch (Exception e) {
+                        System.out.println(e.getMessage());
                         System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }

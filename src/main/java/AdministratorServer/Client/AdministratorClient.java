@@ -34,6 +34,7 @@ public class AdministratorClient {
             System.out.println("1. List of the taxis");
             System.out.println("2. Average last n statistics of given Taxi");
             System.out.println("3. Average statistics of all taxis between timestamp T1 and T2");
+            System.out.println("4. Timestamp");
             System.out.println("\n");
 
             n = in.nextInt();
@@ -116,6 +117,22 @@ public class AdministratorClient {
                     }
                     break;
 
+                case 4:
+                    System.out.println("4. Timestamp");
+
+                    // example http://localhost:1337/statistic/timestamp
+                    url = "http://localhost:1337/statistic/timestamp";
+
+                    webResource = client.resource(url);
+
+                    response = webResource.type("application/json").get(ClientResponse.class);
+
+                    if (response.getStatus() == 200) {
+                        System.out.println(response.getEntity(String.class));
+                    } else {
+                        System.out.println("SERVER ERROR: statistics");
+                    }
+                    break;
 
                 default:
                     System.out.println("Selection not valid");

@@ -55,15 +55,49 @@ public class QueueManager extends Thread {
 
                 // 1. messageArrived
                 // ricezione di un msg su uno specifico topic sul quale eravamo sottoscritti
-                public void messageArrived(String topic, MqttMessage message) throws JSONException {
+                public void messageArrived(String topic, MqttMessage message) throws JSONException, MqttException {
                     System.out.println(topic);
                     String[] splitTopic = topic.split("/");
-                    int idRide = Integer.parseInt(splitTopic[splitTopic.length - 1]);
 
-                    if (splitTopic[splitTopic.length - 3].equals("accomplished")) {
+                    if (splitTopic[splitTopic.length - 2].equals("accomplished")) {
+                        int idRide = Integer.parseInt(splitTopic[splitTopic.length - 1]);
+
                         System.out.println("Presa in carico corsa " + idRide + " e tolta da rideQueue");
+                        System.out.println(Rides.getInstance().getRidesQueue().size());
                         Rides.getInstance().remove(idRide);
-                        System.out.println(Rides.getInstance().getRidesQueue());
+                        System.out.println(Rides.getInstance().getRidesQueue().size());
+                    } else if (splitTopic[splitTopic.length - 2].equals("free")) {
+                        //TODO: quando ricevo uno che è free pubblico la prima della coda e lo ripubblico
+
+                        int idTaxi = Integer.parseInt(splitTopic[splitTopic.length - 1]);
+
+
+                        System.out.println("Taxi libero: " + idTaxi);
+                        System.out.println("Distretto libero: " + message);
+
+                        Ride ride = Rides.getInstance().getRideByDistrictOfStartPosition(Integer.parseInt(String.valueOf(message)));
+
+
+                        if (ride != null) {
+                            System.out.println("ride ottenuta con distretto: " + ride.getStartPosition().getDistrictByPosition());
+
+                            // public ride
+                            // send ride to Mqqt to Topic district
+                            String payload = ride.toJsonString();
+
+                            message = new MqttMessage(payload.getBytes()); // getBytes converte il msg in binario
+                            message.setQos(2);
+                            // System.out.println(clientId + " Publishing message: " + payload.toString());
+                            // System.out.println("Topic: " + topic + actualDistrict);
+                            System.out.println("\n" + "Ride #" + ride.getIDRide() + " REPUBLISHED");
+                            System.out.println("🗺 POSITION: start -> " + ride.getStartPosition().getDistrictByPosition() +
+                                    ", destination -> " + ride.getDestinationPosition().getDistrictByPosition());
+                            client.publish("seta/smartcity/rides/district" + ride.getStartPosition().getDistrictByPosition(), message);
+
+                            Rides.getInstance().add(ride);
+
+                            System.out.println("REPUBLIC RIDE for TOPIC: seta/smartcity/rides/district" + ride.getStartPosition().getDistrictByPosition());
+                        }
                     }
                 }
 

@@ -112,7 +112,6 @@ public class TaxiIstance {
         System.out.println(position);
         System.out.println(position.getDistrictByPosition());
 
-
         taxi.setPosition(position);
         taxi.setBatteryLevel(batteryLevel);
     }

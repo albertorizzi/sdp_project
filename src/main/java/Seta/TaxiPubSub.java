@@ -6,6 +6,7 @@ import AdministratorServer.Model.Taxi;
 import Utils.Utils;
 import com.example.taxis.GrpcServiceGrpc;
 import com.example.taxis.GrpcServiceOuterClass;
+import com.sun.javafx.scene.traversal.SubSceneTraversalEngine;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import jdk.nashorn.internal.runtime.ECMAException;
@@ -56,6 +57,7 @@ public class TaxiPubSub extends Thread {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             connOpts.setMaxInflight(200);
+            connOpts.setConnectionTimeout(0);
 
             client.connect(connOpts); //sincrono
 
@@ -92,6 +94,15 @@ public class TaxiPubSub extends Thread {
                     // check if I'm riding or I'm busy in a ride or is in an election
                     if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
                         System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
+                        System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
+                        System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
+                        System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
+
+                        System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
+
+                        System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
+
+
                     } else {
                         TaxiIstance.getInstance().setInElection(true);
                         TaxiIstance.getInstance().setIdRideInElection(ride.getIDRide());
@@ -129,6 +140,7 @@ public class TaxiPubSub extends Thread {
                                     GrpcServiceOuterClass.RideElectionResponse response;
                                     try {
                                         response = stub.election(request);
+                                        System.out.println(response);
 
 
                                         if (response.getMessageElection().equals("OK")) {
@@ -153,7 +165,7 @@ public class TaxiPubSub extends Thread {
                                         }
                                     } catch (Exception e) {
                                         System.out.println("ERRORE: " + e.getMessage());
-                                        System.out.println("🔴 TaxiPubSub.RideElectionRequest - Non riesco a contattare il drone " + taxi.getId());
+                                        System.out.println("🔴 TaxiPubSub.RideElectionRequest - I can't contact taxi with ID: " + taxi.getId());
                                         TaxiIstance.getInstance().removeTaxi(taxi);
                                     }
                                     channel.shutdownNow();
@@ -305,7 +317,7 @@ public class TaxiPubSub extends Thread {
                             }
 
                             if (countElection == taxiList.size() - 1) {
-                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                                 // recharge
                                 TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -327,7 +339,7 @@ public class TaxiPubSub extends Thread {
                             }
                         } catch (Exception e) {
                             System.out.println("ERRORE: " + e.getMessage());
-                            System.out.println("🔴 TaxiPubSub.taxiTakesRide - Non riesco a contattare il drone " + taxi.getId());
+                            System.out.println("🔴 TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
                             TaxiIstance.getInstance().removeTaxi(taxi);
                         }
                         channel.shutdownNow();

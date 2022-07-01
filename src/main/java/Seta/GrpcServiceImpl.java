@@ -178,6 +178,16 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
                 System.out.println("NON PARTECIPO ELEZIONE");
 
+                System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
+                System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
+                System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
+
+                System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
+
+                System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
+                System.out.println("request.idRide" + request.getIdRide());
+
+
                 if (TaxiIstance.getInstance().getIdRideOnRoad() == request.getIdRide()) {
                     System.out.println("Sto già gestendo io la corsa");
 
@@ -188,6 +198,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                             .setMessageElection("NO")
                             .build();
                 } else {
+                    System.out.println("NON Sto già gestendo io la corsa");
                     response = GrpcServiceOuterClass.RideElectionResponse
                             .newBuilder()
                             .setIdRide(request.getIdRide())

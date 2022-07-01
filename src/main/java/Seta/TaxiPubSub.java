@@ -89,96 +89,101 @@ public class TaxiPubSub extends Thread {
                     );
 
                     Ride ride = new Ride(idRide, startPosition, destinationPosition);
-                    System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
-                    // check if I'm riding or I'm busy in a ride or is in an election
-                    if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
-                        System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
-                        System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
-                        System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
-                        System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
+                    if (ride.getStartPosition().getDistrictByPosition() == districtNumber) {
 
-                        System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
+                        System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
-                        System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
+                        // check if I'm riding or I'm busy in a ride or is in an election
+                        if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
+                            System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
+                            System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
+                            System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
+                            System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
+
+                            System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
+
+                            System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
 
 
-                    } else {
-                        TaxiIstance.getInstance().setInElection(true);
-                        TaxiIstance.getInstance().setIdRideInElection(ride.getIDRide());
-
-                        ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
-                        int countElection = 0;
-
-                        if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
-                            taxiTakesRide(ride);
                         } else {
-                            for (Taxi taxi : taxiList) {
-                                if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
-                                    //opening a connection with the taxi's server
-                                    final ManagedChannel channel = ManagedChannelBuilder
-                                            .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
-                                            .usePlaintext()
-                                            .build();
+                            TaxiIstance.getInstance().setInElection(true);
+                            TaxiIstance.getInstance().setIdRideInElection(ride.getIDRide());
 
-                                    GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+                            ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
+                            int countElection = 0;
 
-                                    GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
-                                            .newBuilder()
-                                            .setX(ride.getStartPosition().getX())
-                                            .setY(ride.getStartPosition().getY())
-                                            .build();
+                            if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
+                                taxiTakesRide(ride);
+                            } else {
+                                for (Taxi taxi : taxiList) {
+                                    if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+                                        //opening a connection with the taxi's server
+                                        final ManagedChannel channel = ManagedChannelBuilder
+                                                .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                                                .usePlaintext()
+                                                .build();
 
-                                    GrpcServiceOuterClass.RideElectionRequest request = GrpcServiceOuterClass.RideElectionRequest
-                                            .newBuilder()
-                                            .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
-                                            .setIdRide(ride.getIDRide())
-                                            .setStartPositionRide(position)
-                                            .setBatteryLevel(TaxiIstance.getInstance().getMyTaxi().getBatteryLevel())
-                                            .build();
+                                        GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
 
-                                    GrpcServiceOuterClass.RideElectionResponse response;
-                                    try {
-                                        response = stub.election(request);
-                                        System.out.println(response);
+                                        GrpcServiceOuterClass.Position position = GrpcServiceOuterClass.Position
+                                                .newBuilder()
+                                                .setX(ride.getStartPosition().getX())
+                                                .setY(ride.getStartPosition().getY())
+                                                .build();
+
+                                        GrpcServiceOuterClass.RideElectionRequest request = GrpcServiceOuterClass.RideElectionRequest
+                                                .newBuilder()
+                                                .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
+                                                .setIdRide(ride.getIDRide())
+                                                .setStartPositionRide(position)
+                                                .setBatteryLevel(TaxiIstance.getInstance().getMyTaxi().getBatteryLevel())
+                                                .build();
+
+                                        GrpcServiceOuterClass.RideElectionResponse response;
+                                        try {
+                                            response = stub.election(request);
+                                            System.out.println(response);
 
 
-                                        if (response.getMessageElection().equals("OK")) {
-                                            countElection++;
-                                        } else if (response.getMessageElection().equals("NO")) {
-                                            synchronized (TaxiIstance.getInstance().getElectionLock()) {
-                                                TaxiIstance.getInstance().setInElection(false);
-                                                TaxiIstance.getInstance().getElectionLock().notify();
+                                            if (response.getMessageElection().equals("OK")) {
+                                                countElection++;
+                                            } else if (response.getMessageElection().equals("NO")) {
+                                                synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                                                    TaxiIstance.getInstance().setInElection(false);
+                                                    TaxiIstance.getInstance().getElectionLock().notify();
+                                                }
+
+                                                System.out.println("NON GESTISCO IO LA RIDE: " + ride.getIDRide() + " nel district: " + ride.getStartPosition().getDistrictByPosition());
+
                                             }
 
-                                            System.out.println("NON GESTISCO IO LA RIDE: " + ride.getIDRide() + " nel district: " + ride.getStartPosition().getDistrictByPosition());
 
-                                        }
+                                            if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
+                                                System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by ME -> Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
+                                                taxiTakesRide(ride);
+                                            } else {
+                                                System.out.println("🚕 NOT manage ride " + ride.getIDRide());
 
-                                        if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
-                                            System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by ME -> Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                                                synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                                                    TaxiIstance.getInstance().setInElection(false);
+                                                    TaxiIstance.getInstance().getElectionLock().notify();
+                                                }
 
-                                            taxiTakesRide(ride);
-                                        } else {
-                                            System.out.println("🚕 NOT manage ride " + ride.getIDRide());
-
-                                            synchronized (TaxiIstance.getInstance().getElectionLock()) {
-                                                TaxiIstance.getInstance().setInElection(false);
-                                                TaxiIstance.getInstance().getElectionLock().notify();
                                             }
-
+                                        } catch (Exception e) {
+                                            System.out.println("ERRORE: " + e.getMessage());
+                                            System.out.println("🔴 TaxiPubSub.RideElectionRequest - I can't contact taxi with ID: " + taxi.getId());
+                                            TaxiIstance.getInstance().removeTaxi(taxi);
                                         }
-                                    } catch (Exception e) {
-                                        System.out.println("ERRORE: " + e.getMessage());
-                                        System.out.println("🔴 TaxiPubSub.RideElectionRequest - I can't contact taxi with ID: " + taxi.getId());
-                                        TaxiIstance.getInstance().removeTaxi(taxi);
+                                        channel.shutdownNow();
                                     }
-                                    channel.shutdownNow();
-                                }
 
+                                }
                             }
                         }
+
                     }
                 }
 
@@ -261,7 +266,6 @@ public class TaxiPubSub extends Thread {
         if (updateBatteryLevel < 30) {
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 
-
             ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
             int countElection = 0;
 
@@ -319,11 +323,10 @@ public class TaxiPubSub extends Thread {
                                 countElection++;
                             } else if (response.getMessageResponse().equals("NO")) {
 
-
                             }
 
                             if (countElection == taxiList.size() - 1) {
-                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + "districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                                 // recharge
                                 TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -350,7 +353,6 @@ public class TaxiPubSub extends Thread {
                         }
                         channel.shutdownNow();
                     }
-
                 }
             }
         }
@@ -361,7 +363,6 @@ public class TaxiPubSub extends Thread {
         TaxiIstance.getInstance().getMyTaxi().setPosition(newTaxiPosition);
         TaxiIstance.getInstance().addKmTravelled(kmRide);
         TaxiIstance.getInstance().addNumberRides();
-        TaxiIstance.getInstance().setIdRideOnRoad(ride.getIDRide());
 
 
         // update other taxi with my new data

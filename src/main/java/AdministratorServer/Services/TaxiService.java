@@ -54,7 +54,6 @@ public class TaxiService {
             return Response.status(Response.Status.CREATED).entity(Taxis.getInstance().getTaxisList()).build();
             //   return Response.ok(Taxis.getInstance().getTaxisList()).build();
 
-
         }
     }
 }

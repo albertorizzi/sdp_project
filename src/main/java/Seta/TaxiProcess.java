@@ -352,7 +352,7 @@ public class TaxiProcess {
                         }
 
                         if (countElection == taxiList.size() - 1) {
-                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districts WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                             // recharge
                             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -433,13 +433,11 @@ public class TaxiProcess {
     }
 
     public static void explicitClosure() throws IOException, InterruptedException {
-        /*
-            1. complete the possible ride it is involved in, sending to the Administra-
-                tor Server the information described in Section 5.2.2
-            2. complete any battery recharge
-            3. notify the other taxis of the smart city
-            4. request the Administrator Server to leave the smart city
-         */
+        // 1. complete the possible ride it is involved in, sending to the Administra-
+        //     tor Server the information described in Section 5.2.2
+        // 2. complete any battery recharge
+        // 3. notify the other taxis of the smart city
+        // 4. request the Administrator Server to leave the smart city
 
 
         if (TaxiIstance.getInstance().isInExit()) {

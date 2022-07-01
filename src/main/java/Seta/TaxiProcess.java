@@ -163,7 +163,6 @@ public class TaxiProcess {
                 welcomeClient(); // create client only if taxiList is not empty
             }
 
-            // grpc.awaitTermination();
         } catch (IOException e) {
             System.out.println("welcomeServer -IOException error");
             e.printStackTrace();
@@ -171,8 +170,6 @@ public class TaxiProcess {
     }
 
     private static void welcomeClient() {
-        System.out.println("welcomeClient()");
-
         ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
 
         for (Taxi taxi : taxiList) {
@@ -208,8 +205,7 @@ public class TaxiProcess {
                     System.out.println(response);
                 } catch (Exception e) {
                     //System.out.println("ERRORE: " + e.getMessage());
-                    System.out.println("🔴 welcomeClient - Non riesco a contattare il drone " + taxi.getId());
-
+                    System.out.println("⚠️ TaxiProcess.welcomeClient - I can't contaxt Taxi with ID " + taxi.getId());
                     TaxiIstance.getInstance().removeTaxi(taxi);
                 }
                 channel.shutdownNow();
@@ -219,10 +215,10 @@ public class TaxiProcess {
 
     private static void manageInputFromKeyboard() {
 
-        new Thread(() -> { // lambda expression
+        new Thread(() -> {
             while (true) {
                 Scanner scanner = new Scanner(System.in);
-                //System.out.print("⏹ Send quit to stop the drone process...\n");
+
                 String input = scanner.next();
 
                 switch (input) {
@@ -236,7 +232,7 @@ public class TaxiProcess {
                         }
 
                         break;
-                    case "re":
+                    case "recharge":
                         System.out.print("⚡️ recharge request\n");
                         if (TaxiIstance.getInstance().isInExit())
                             System.out.println("⚡️ I can't recharge, I'm quitting");
@@ -254,7 +250,6 @@ public class TaxiProcess {
                 }
             }
         }).start();
-
     }
 
     private static void rechargeTaxiBattery() throws InterruptedException {
@@ -351,26 +346,7 @@ public class TaxiProcess {
                             break;
                         }
 
-                        if (countElection == taxiList.size() - 1) {
-                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districts WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
-                            // recharge
-                            TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
-
-                            System.out.println("⚡️ Charging...");
-                            Thread.sleep(10000); // 10 seconds
-                            System.out.println("⚡️ Battery completed...");
-
-                            ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
-                            newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
-
-                            synchronized (TaxiIstance.getInstance().getRechargeLock()) {
-                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
-                                TaxiIstance.getInstance().getRechargeLock().notify();
-                            }
-                        } else {
-                            System.out.println("❌ 🪫 RECHARGE station NOT WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
-                        }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                         System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
@@ -378,6 +354,27 @@ public class TaxiProcess {
                     }
                     channel.shutdownNow();
                 }
+            }
+
+            if (countElection == taxiList.size() - 1) {
+                System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districts WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                // recharge
+                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+                System.out.println("⚡️ Charging...");
+                Thread.sleep(10000); // 10 seconds
+                System.out.println("⚡️ Battery completed...");
+
+                ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
+                newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
+
+                synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                    TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                    TaxiIstance.getInstance().getRechargeLock().notify();
+                }
+            } else {
+                System.out.println("❌ 🪫 RECHARGE station NOT WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
             }
         }
 
@@ -476,7 +473,6 @@ public class TaxiProcess {
         // complete recharge
         rechargeTaxiBattery();
 
-
         // disconnection with BROKER
         taxiPubSub.disconnectClient();
 
@@ -515,7 +511,6 @@ public class TaxiProcess {
             System.out.println("Error: " + e.getMessage());
         }
 
-        // 5. SUPER USCITA
         System.exit(0);
     }
 

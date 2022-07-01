@@ -60,8 +60,6 @@ public class RideGenerator extends Thread {
 
         // Ride Generator
         // every 5 seconds generate 2 rides starting at random position
-        // TODO: cambiare in 2
-
         while (true) {
             try {
 
@@ -73,7 +71,6 @@ public class RideGenerator extends Thread {
                 /* test - district 1
                 startPosition = new Position(0,3);
                 endPosition = new Position(0,4);
-
                 */
 
                 startPosition = null;

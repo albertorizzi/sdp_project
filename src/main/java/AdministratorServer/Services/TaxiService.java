@@ -56,4 +56,17 @@ public class TaxiService {
 
         }
     }
+
+
+    // http://localhost:1337/taxi/remove/1
+    @Path("remove/{id}")
+    @DELETE
+    @Produces("text/plain")
+    public Response removeTaxi(@PathParam("id") int idTaxi){
+        if (Taxis.getInstance().remove(idTaxi)) {
+            return Response.ok("✅ Taxi removed successfully!").build();
+        } else  {
+            return Response.status(Response.Status.NOT_FOUND).entity("Taxi" + idTaxi + " doesn't exist.").build();
+        }
+    }
 }

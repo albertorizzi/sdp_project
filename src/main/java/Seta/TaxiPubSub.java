@@ -59,13 +59,12 @@ public class TaxiPubSub extends Thread {
             connOpts.setMaxInflight(500);
             connOpts.setConnectionTimeout(0);
 
-            client.connect(connOpts); //sincrono
+            client.connect(connOpts); // synchronous
 
             client.setCallback(new MqttCallback() {
                 // messageArrived: reception of message of specific topic on this there's a subscription
                 public void messageArrived(String topic, MqttMessage message) throws JSONException, MqttException, InterruptedException {
                     // Called when a message arrives from the server that matches any subscription made by the client
-                    //String time = new Timestamp(System.currentTimeMillis()).toString();
                     String receivedMessage = new String(message.getPayload()); // from binary to string
 
                     JSONObject jsonObject = new JSONObject();
@@ -75,6 +74,7 @@ public class TaxiPubSub extends Thread {
                         err.printStackTrace();
                     }
 
+                    // obtain a ride from JSONobj
                     JSONObject rideObject = (JSONObject) jsonObject.get("ride");
                     int idRide = Integer.parseInt((String) rideObject.get("id"));
 
@@ -91,21 +91,14 @@ public class TaxiPubSub extends Thread {
                     Ride ride = new Ride(idRide, startPosition, destinationPosition);
 
                     if (ride.getStartPosition().getDistrictByPosition() == districtNumber) {
-
                         System.out.println("\n" + "📍 New Ride -> id: " + ride.getIDRide() + " district: " + ride.getStartPosition().getDistrictByPosition());
 
                         // check if I'm riding or I'm busy in a ride or is in an election
                         if (TaxiIstance.getInstance().isInCharge() || TaxiIstance.getInstance().isInRide() || TaxiIstance.getInstance().isInElection()) {
-                            System.out.println("NON gestisco la corsa (sono impegnato) " + ride); // TODO: cosa devo fare?
-                            System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
-                            System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
-                            System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
-
-                            System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
-
-                            System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
-
-
+                            System.out.println("🚕 NOT manage ride " + ride);
+                            System.out.println("isInCharge(): " + TaxiIstance.getInstance().isInCharge());
+                            System.out.println("isInRide(): " + TaxiIstance.getInstance().isInRide());
+                            System.out.println("isInElection(): " + TaxiIstance.getInstance().isInElection());
                         } else {
                             TaxiIstance.getInstance().setInElection(true);
                             TaxiIstance.getInstance().setIdRideInElection(ride.getIDRide());
@@ -145,39 +138,37 @@ public class TaxiPubSub extends Thread {
                                             response = stub.election(request);
                                             System.out.println(response);
 
-
                                             if (response.getMessageElection().equals("OK")) {
                                                 countElection++;
-                                            } else if (response.getMessageElection().equals("NO")) {
+                                            }
+                                            /* todo: check
+                                            else if (response.getMessageElection().equals("NO")) {
                                                 synchronized (TaxiIstance.getInstance().getElectionLock()) {
                                                     TaxiIstance.getInstance().setInElection(false);
                                                     TaxiIstance.getInstance().getElectionLock().notify();
                                                 }
-
-                                                System.out.println("NON GESTISCO IO LA RIDE: " + ride.getIDRide() + " nel district: " + ride.getStartPosition().getDistrictByPosition());
-
                                             }
 
-
-                                            if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
-                                                System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by ME -> Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
-
-                                                taxiTakesRide(ride);
-                                            } else {
-                                                System.out.println("🚕 NOT manage ride " + ride.getIDRide());
-
-                                                synchronized (TaxiIstance.getInstance().getElectionLock()) {
-                                                    TaxiIstance.getInstance().setInElection(false);
-                                                    TaxiIstance.getInstance().getElectionLock().notify();
-                                                }
-
-                                            }
+                                             */
                                         } catch (Exception e) {
                                             System.out.println("ERRORE: " + e.getMessage());
                                             System.out.println("🔴 TaxiPubSub.RideElectionRequest - I can't contact taxi with ID: " + taxi.getId());
                                             TaxiIstance.getInstance().removeTaxi(taxi);
                                         }
                                         channel.shutdownNow();
+                                    }
+                                }
+
+                                if (countElection == taxiList.size() - 1) { // -1 because in taxiList I'm NOT present
+                                    System.out.println("📍 ELECTION for ride " + ride.getIDRide() + " WON by ME -> Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                                    taxiTakesRide(ride);
+                                } else {
+                                    System.out.println("🚕 NOT manage ride " + ride.getIDRide());
+
+                                    synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                                        TaxiIstance.getInstance().setInElection(false);
+                                        TaxiIstance.getInstance().getElectionLock().notify();
                                     }
 
                                 }
@@ -188,24 +179,22 @@ public class TaxiPubSub extends Thread {
                 }
 
                 // 2. connectionLost
-                // informa il client di una disconnessione inaspettata con il broker
+                // informs the client of an unexpected disconnection with the broker
                 public void connectionLost(Throwable cause) {
                     System.out.println(clientId + " Connection lost! cause:" + cause.getMessage() + "-  Thread PID: " + Thread.currentThread().getId());
                 }
 
                 // 3. deliveryComplete
-                // se il msg è stato consegnato, o non è stato consegnato, al broker
+                // whether the message was delivered, or not delivered, to the broker
                 public void deliveryComplete(IMqttDeliveryToken token) {
                     // Not used here
                 }
 
             });
 
-            //System.out.println(clientId + " Subscribing ... - Thread PID: " + Thread.currentThread().getId());
             client.subscribe(topic, qos);
-            // posso anche usare i vettori: .subscribre(["topic/a","topic/b"],[qos_a,qos_b])
-            System.out.println("🚚 Subscribed to topics : " + topic);
 
+            System.out.println("🚚 Subscribed to topics : " + topic);
 
         } catch (MqttException me) {
             System.out.println("🔴 MqttException");
@@ -215,18 +204,17 @@ public class TaxiPubSub extends Thread {
             System.out.println("cause " + me.getCause());
             System.out.println("excep " + me);
             me.printStackTrace();
-        } // catch
-
+        }
     }
 
 
     /*
-        1. 5 secondi per ride
-        2. Cambio i miei dati
-            2.1 1% di batteria per ogni chilometro
-        3. RCP per inviare i miei nuovi dati a tutti gli altri taxi
-        4. Mi iscrivo ad un altro topic, quello del mio nuovo distretto
-        5. setRiding a false
+        1. 5 seconds for ride
+        2. I change my data
+            2.1 1% of battery for kilometres
+        3. RPC to send data to update other Taxis
+        4. If I change districts after ride, I subscribe to new topic
+        5. setRiding to boolean false
     */
     private void taxiTakesRide(Ride ride) throws MqttException, InterruptedException {
         System.out.println("🗾 I manage RIDE " + ride);
@@ -245,7 +233,6 @@ public class TaxiPubSub extends Thread {
         // TOPIC example: "seta/smartcity/rides/accomplished/15"
         client.publish("seta/smartcity/rides/accomplished/" + ride.getIDRide(), payload);
 
-
         // 5 seconds to manage ride
         Thread.sleep(5000);
 
@@ -262,7 +249,6 @@ public class TaxiPubSub extends Thread {
         Position newTaxiPosition = ride.getDestinationPosition();
 
         // check if batteries is < 30 %
-        // TODO: cambiare livello
         if (updateBatteryLevel < 30) {
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 
@@ -273,7 +259,7 @@ public class TaxiPubSub extends Thread {
             long timestamp = date.getTime(); // timestamp in ms
 
             if (taxiList.size() == 1) { // I'm only the one Taxi in SETA
-                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " district WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " district WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                 // recharge
                 TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -324,28 +310,6 @@ public class TaxiPubSub extends Thread {
                             } else if (response.getMessageResponse().equals("NO")) {
 
                             }
-
-                            if (countElection == taxiList.size() - 1) {
-                                System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
-
-                                // recharge
-                                TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
-
-                                System.out.println("⚡️ Charging...");
-                                Thread.sleep(10000); // 10 seconds
-                                System.out.println("⚡️ Battery completed...");
-
-                                updateBatteryLevel = 100;
-                                ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
-                                newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
-
-                                synchronized (TaxiIstance.getInstance().getRechargeLock()) {
-                                    TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
-                                    TaxiIstance.getInstance().getRechargeLock().notify();
-                                }
-                            } else {
-                                System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
-                            }
                         } catch (Exception e) {
                             System.out.println("ERRORE: " + e.getMessage());
                             System.out.println("🔴 TaxiPubSub.taxiTakesRide - I can't contact taxi with ID: " + taxi.getId());
@@ -353,6 +317,28 @@ public class TaxiPubSub extends Thread {
                         }
                         channel.shutdownNow();
                     }
+                }
+
+                if (countElection == taxiList.size() - 1) {
+                    System.out.println("♻️ 🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districts WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+
+                    // recharge
+                    TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
+
+                    System.out.println("⚡️ Charging...");
+                    Thread.sleep(10000); // 10 seconds
+                    System.out.println("⚡️ Battery completed...");
+
+                    updateBatteryLevel = 100;
+                    ArrayList<Integer> arr = newTaxiPosition.getPositionOfRechargeStationByDistrict();
+                    newTaxiPosition = new Position(arr.get(0), arr.get(1)); // management of position because Jersey didn't work using new Position
+
+                    synchronized (TaxiIstance.getInstance().getRechargeLock()) {
+                        TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_NOT_IN_USED);
+                        TaxiIstance.getInstance().getRechargeLock().notify();
+                    }
+                } else {
+                    System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                 }
             }
         }
@@ -408,7 +394,6 @@ public class TaxiPubSub extends Thread {
                     }
                     channel.shutdownNow();
                 }
-
             }
         }
 
@@ -432,10 +417,8 @@ public class TaxiPubSub extends Thread {
         }
         System.out.println("🚕 Ride " + ride.getIDRide() + " FINISHED");
 
-        // TODO: pubblicare su seta che mi sono liberato
 
         // I'm free, I advise SETA to public eventually a ride in my district
-
         String payloadTaxiFree = String.valueOf(newTaxiPosition.getDistrictByPosition());
         MqttMessage messageRide = new MqttMessage(payloadTaxiFree.getBytes());
         messageRide.setQos(2);

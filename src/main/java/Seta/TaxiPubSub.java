@@ -56,7 +56,7 @@ public class TaxiPubSub extends Thread {
             client = new MqttClient(broker, clientId);
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
-            connOpts.setMaxInflight(200);
+            connOpts.setMaxInflight(500);
             connOpts.setConnectionTimeout(0);
 
             client.connect(connOpts); //sincrono
@@ -162,6 +162,12 @@ public class TaxiPubSub extends Thread {
                                             taxiTakesRide(ride);
                                         } else {
                                             System.out.println("🚕 NOT manage ride " + ride.getIDRide());
+
+                                            synchronized (TaxiIstance.getInstance().getElectionLock()) {
+                                                TaxiIstance.getInstance().setInElection(false);
+                                                TaxiIstance.getInstance().getElectionLock().notify();
+                                            }
+
                                         }
                                     } catch (Exception e) {
                                         System.out.println("ERRORE: " + e.getMessage());
@@ -418,6 +424,13 @@ public class TaxiPubSub extends Thread {
             System.out.println("🗺 SAME district: " + newTaxiPosition.getDistrictByPosition());
         }
 
+        // setRiding to false
+        synchronized (TaxiIstance.getInstance().getRideLock()) {
+            TaxiIstance.getInstance().setInRide(false);
+            TaxiIstance.getInstance().getRideLock().notify();
+        }
+        System.out.println("🚕 Ride " + ride.getIDRide() + " FINISHED");
+
         // TODO: pubblicare su seta che mi sono liberato
 
         // I'm free, I advise SETA to public eventually a ride in my district
@@ -427,14 +440,6 @@ public class TaxiPubSub extends Thread {
         messageRide.setQos(2);
 
         client.publish("seta/smartcity/taxi/free/" + TaxiIstance.getInstance().getMyTaxi().getId(), messageRide);
-
-
-        // setRiding to false
-        synchronized (TaxiIstance.getInstance().getRideLock()) {
-            TaxiIstance.getInstance().setInRide(false);
-            TaxiIstance.getInstance().getRideLock().notify();
-        }
-        System.out.println("🚕 Ride " + ride.getIDRide() + " FINISHED");
     }
 
     public static void disconnectClient() {

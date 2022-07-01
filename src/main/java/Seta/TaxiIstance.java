@@ -61,6 +61,7 @@ public class TaxiIstance {
     public void addTaxi(Taxi t) {
         synchronized (taxiList) {
             taxiList.add(t);
+            taxiList.notify();
         }
     }
 
@@ -68,7 +69,10 @@ public class TaxiIstance {
     public void removeTaxi(Taxi taxi) {
         synchronized (taxiList) {
             taxiList.remove(taxi);
+            taxiList.notify();
         }
+
+        System.out.println(taxiList);
     }
 
     public void addAverageListPollutionMeasure(Measurement pm10) {
@@ -109,11 +113,13 @@ public class TaxiIstance {
         Taxi taxi = taxiList.stream().filter(t ->
                 t.getId() == taxiId).findFirst().orElse(null);
 
+        if (taxi != null) {
+            taxi.setPosition(position);
+            taxi.setBatteryLevel(batteryLevel);
+        }
+
         System.out.println(position);
         System.out.println(position.getDistrictByPosition());
-
-        taxi.setPosition(position);
-        taxi.setBatteryLevel(batteryLevel);
     }
 
     public void addKmTravelled(int kmTravelled) {

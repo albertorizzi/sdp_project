@@ -352,7 +352,7 @@ public class TaxiProcess {
                         }
 
                         if (countElection == taxiList.size() - 1) {
-                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                            System.out.println("♻️🪫️ RECHARGE station in " + newTaxiPosition.getDistrictByPosition() + " districs WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                             // recharge
                             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_IN_USED);
@@ -369,7 +369,7 @@ public class TaxiProcess {
                                 TaxiIstance.getInstance().getRechargeLock().notify();
                             }
                         } else {
-                            System.out.println("❌ 🪫 RECHARGE station NOT WON by Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
+                            System.out.println("❌ 🪫 RECHARGE station NOT WON by ME - Taxi " + TaxiIstance.getInstance().getMyTaxi().getId());
                         }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());

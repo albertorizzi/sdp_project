@@ -42,8 +42,7 @@ public class RideGenerator extends Thread {
             client = new MqttClient(broker, clientId);
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
-            connOpts.setCleanSession(true);
-            connOpts.setMaxInflight(200);
+            connOpts.setMaxInflight(500);
             connOpts.setConnectionTimeout(0);
 
             // Connect the client

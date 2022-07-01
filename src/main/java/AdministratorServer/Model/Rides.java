@@ -26,34 +26,55 @@ public class Rides {
     }
 
     public synchronized void add(Ride ride) {
-        ridesQueue.add(ride);
+        synchronized (ridesQueue) {
+            for (Ride r : ridesQueue) {
+                if (r.getIDRide() == ride.getIDRide()) {
+                    return;
+                }
+            }
+            ridesQueue.add(ride);
+            ridesQueue.notify();
+        }
     }
 
     public synchronized boolean remove(int idRide) {
         // true - correct remove
         // false - NOT exist, nothing to remove
-        for (Ride ride : ridesQueue) {
-            if (ride.getIDRide() == idRide) {
-                ridesQueue.remove(ride);
-                return true;
+
+        synchronized (ridesQueue) {
+            for (Ride ride : ridesQueue) {
+                if (ride.getIDRide() == idRide) {
+                    ridesQueue.remove(ride);
+
+                    ridesQueue.notify();
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
+
     }
 
     public synchronized Ride getRideByDistrictOfStartPosition(int district) {
-        Ride response;
-        List<Ride> rideFilteredByStartDistrict = ridesQueue.stream().filter(
-                        ride -> ride.getStartPosition().getDistrictByPosition() == district)
-                .collect(Collectors.toList());
+        synchronized (ridesQueue) {
+            Ride response;
+            List<Ride> rideFilteredByStartDistrict = ridesQueue.stream().filter(
+                            ride -> ride.getStartPosition().getDistrictByPosition() == district)
+                    .collect(Collectors.toList());
 
-        if (rideFilteredByStartDistrict.isEmpty()) {
-            return null;
-        } else {
-            response = rideFilteredByStartDistrict.get(0);
-            rideFilteredByStartDistrict.remove(0);
+            if (rideFilteredByStartDistrict.isEmpty()) {
+                return null;
+            } else {
+                response = rideFilteredByStartDistrict.get(0);
+                rideFilteredByStartDistrict.remove(0);
 
-            return response;
+                ridesQueue.notify();
+
+                return response;
+            }
         }
+
+
+
     }
 }

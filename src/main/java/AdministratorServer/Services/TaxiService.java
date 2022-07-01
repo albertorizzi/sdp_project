@@ -3,11 +3,12 @@ package AdministratorServer.Services;
 import AdministratorServer.Model.Taxi;
 import AdministratorServer.Model.Taxis;
 import com.google.gson.Gson;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 @Path("taxi")
-public class AdministratorServer {
+public class TaxiService {
 
     // GET - http://localhost:1337/taxi
     @GET
@@ -50,24 +51,10 @@ public class AdministratorServer {
             return Response.status(Response.Status.CONFLICT).entity(message).build();
         } else {
             Taxis.getInstance().add(taxi);
-           return Response.status(Response.Status.CREATED).entity(Taxis.getInstance().getTaxisList()).build();
-         //   return Response.ok(Taxis.getInstance().getTaxisList()).build();
+            return Response.status(Response.Status.CREATED).entity(Taxis.getInstance().getTaxisList()).build();
+            //   return Response.ok(Taxis.getInstance().getTaxisList()).build();
 
 
         }
     }
-
-
-    // http://localhost:1337/taxi/remove/1
-    @Path("remove/{id}")
-    @DELETE
-    @Produces("text/plain")
-    public Response removeDrone(@PathParam("id") int idTaxi){
-        if (Taxis.getInstance().remove(idTaxi)) {
-            return Response.ok("✅ Taxi removed successfully!").build();
-        } else  {
-            return Response.status(Response.Status.NOT_FOUND).entity("Taxi" + idTaxi + " doesn't exist.").build();
-        }
-    }
-
 }

@@ -117,9 +117,6 @@ public class TaxiIstance {
             taxi.setPosition(position);
             taxi.setBatteryLevel(batteryLevel);
         }
-
-        System.out.println(position);
-        System.out.println(position.getDistrictByPosition());
     }
 
     public void addKmTravelled(int kmTravelled) {

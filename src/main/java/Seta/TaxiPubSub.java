@@ -141,15 +141,6 @@ public class TaxiPubSub extends Thread {
                                             if (response.getMessageElection().equals("OK")) {
                                                 countElection++;
                                             }
-                                            /* todo: check
-                                            else if (response.getMessageElection().equals("NO")) {
-                                                synchronized (TaxiIstance.getInstance().getElectionLock()) {
-                                                    TaxiIstance.getInstance().setInElection(false);
-                                                    TaxiIstance.getInstance().getElectionLock().notify();
-                                                }
-                                            }
-
-                                             */
                                         } catch (Exception e) {
                                             System.out.println("ERRORE: " + e.getMessage());
                                             System.out.println("🔴 TaxiPubSub.RideElectionRequest - I can't contact taxi with ID: " + taxi.getId());
@@ -170,11 +161,9 @@ public class TaxiPubSub extends Thread {
                                         TaxiIstance.getInstance().setInElection(false);
                                         TaxiIstance.getInstance().getElectionLock().notify();
                                     }
-
                                 }
                             }
                         }
-
                     }
                 }
 
@@ -222,7 +211,7 @@ public class TaxiPubSub extends Thread {
         TaxiIstance.getInstance().setIdRideOnRoad(ride.getIDRide());
 
 
-        // Notifico che non sono più in un'elezione con il notify
+        // notify that I'm not in election anymore
         synchronized (TaxiIstance.getInstance().getElectionLock()) {
             TaxiIstance.getInstance().setInElection(false);
             TaxiIstance.getInstance().getElectionLock().notify();
@@ -307,8 +296,6 @@ public class TaxiPubSub extends Thread {
 
                             if (response.getMessageResponse().equals("OK")) {
                                 countElection++;
-                            } else if (response.getMessageResponse().equals("NO")) {
-
                             }
                         } catch (Exception e) {
                             System.out.println("ERRORE: " + e.getMessage());

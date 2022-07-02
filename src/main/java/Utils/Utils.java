@@ -9,7 +9,6 @@ public final class Utils {
                         Math.pow(endPosition.getX() - startPosition.getX(), 2) +
                                 Math.pow(endPosition.getY() - startPosition.getY(), 2)
                 );
-        System.out.println(distance);
         return distance;
     }
 }

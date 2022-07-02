@@ -76,7 +76,7 @@ public class TaxiProcess {
 
                 success = true;
             } catch (Exception e) {
-                System.out.println("registrationMethod - Error (IOException): " + e.getMessage());
+                System.out.println("⚠️ TaxiProcess.registrationMethod() - Error (IOException): " + e.getMessage());
             }
         }
 
@@ -102,16 +102,15 @@ public class TaxiProcess {
                     TaxiIstance.getInstance().setIdCurrentTaxi(taxiId);
                 }
             } catch (JSONException e) {
-                System.out.println("registrationMethod - JSONException: " + e.getMessage());
+                System.out.println("⚠️ TaxiProcess.registrationMethod() - JSONException: " + e.getMessage());
             }
-
         }
 
         System.out.println("🚖 taxiList: " + TaxiIstance.getInstance().getTaxiList());
         System.out.println("🚖 I'm Taxi: " + TaxiIstance.getInstance().getMyTaxi().getId());
 
         startPollutionSensors(); // startPollutionSensor
-        startStatisticsToServer();
+        startStatisticsToServer(); // every 15 seconds send Statisics To Server
 
         // Taxi subscribe to the request of ride of own district
         taxiPubSub = new TaxiPubSub(TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
@@ -202,9 +201,8 @@ public class TaxiProcess {
                 GrpcServiceOuterClass.HelloResponse response;
                 try {
                     response = stub.greeting(request);
-                    System.out.println(response);
                 } catch (Exception e) {
-                    //System.out.println("ERRORE: " + e.getMessage());
+                    // System.out.println("ERRORE: " + e.getMessage());
                     System.out.println("⚠️ TaxiProcess.welcomeClient - I can't contaxt Taxi with ID " + taxi.getId());
                     TaxiIstance.getInstance().removeTaxi(taxi);
                 }
@@ -342,13 +340,9 @@ public class TaxiProcess {
 
                         if (response.getMessageResponse().equals("OK")) {
                             countElection++;
-                        } else if (response.getMessageResponse().equals("NO")) {
-                            break;
                         }
-
-
                     } catch (Exception e) {
-                        System.out.println(e.getMessage());
+                        // System.out.println(e.getMessage());
                         System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }
@@ -418,7 +412,7 @@ public class TaxiProcess {
                         response = stub.notifyTaxisAfterRide(request);
                         //System.out.println(response);
                     } catch (Exception e) {
-                        System.out.println(e.getMessage());
+                        // System.out.println(e.getMessage());
                         System.out.println("⚠️ TaxiProcess.rechargeTaxiBattery - I can't contact taxi with ID: " + taxi.getId());
                         TaxiIstance.getInstance().removeTaxi(taxi);
                     }
@@ -476,7 +470,11 @@ public class TaxiProcess {
         // disconnection with BROKER
         taxiPubSub.disconnectClient();
 
-        // Send stats ti REST server
+        // notify the other taxis of the smart city
+
+
+
+        // Send stats to REST server
         System.out.println("⏹ Sending last stats to the REST Server StatisticService...");
         sendStatsToServer();
 
@@ -568,7 +566,7 @@ public class TaxiProcess {
             }
 
         } catch (Exception e) {
-            System.out.println("sendStatsToServer - Error (IOException): " + e.getMessage());
+            System.out.println("⚠️ TaxiPubSub.sendStatsToServer() - Error (IOException): " + e.getMessage());
         }
     }
 }

@@ -53,24 +53,16 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
         GrpcServiceOuterClass.RideElectionResponse response = null;
 
         Position startPositionRide = new Position(request.getStartPositionRide().getX(), request.getStartPositionRide().getY());
-        System.out.println("distretto ride partenza " + startPositionRide.getDistrictByPosition());
-        System.out.println("distretto posiziione taxi " + TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
+        System.out.println("Start district ride " + startPositionRide.getDistrictByPosition());
+        System.out.println("Position district taxi " + TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition());
 
         // check if ride request come from district where I'm
         if (startPositionRide.getDistrictByPosition() == TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition()) {
-            System.out.println("SONO nello stesso distretto di " + startPositionRide);
+            System.out.println("I'm in the SAME district");
 
             // check if taxi is busy in a ride or in recharging
-
-            //TODO: va tolto? forse perchè tanto viene controllato di là?
             if (!TaxiIstance.getInstance().isInRide() && !TaxiIstance.getInstance().isInCharge() && TaxiIstance.getInstance().getIdRideInElection() == request.getIdRide()) {
-                System.out.println("PARTECIPO ELEZIONE");
-
-                System.out.println("startPositionRide " + startPositionRide);
-                System.out.println("TaxiIstance.getInstance().getPositionOfTaxi(request.getIdTaxi()) " + TaxiIstance.getInstance().getPositionOfTaxi(request.getIdTaxi()));
-                System.out.println("axiIstance.getInstance().getMyTaxi().getPosition() " + TaxiIstance.getInstance().getMyTaxi().getPosition());
-
-
+                System.out.println("ELECTION PARTECIPATE");
 
                 // comparison distances between Taxi position request and my position
                 double distanzeOfTaxiRequest = Utils.getDistanceBetweenTwoPosition(startPositionRide,
@@ -79,12 +71,8 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                 double distanzeOfMyTaxi = Utils.getDistanceBetweenTwoPosition(startPositionRide,
                         TaxiIstance.getInstance().getMyTaxi().getPosition());
 
-
-                System.out.println("Distance Taxi request: " + distanzeOfTaxiRequest);
-                System.out.println("Distance My Taxi:" + distanzeOfMyTaxi);
                 if (distanzeOfTaxiRequest < distanzeOfMyTaxi) {
-
-                    System.out.println("Distance of taxi request < distanzeOfMyTaxi");
+                    System.out.println("DISTANCE of Taxi REQUEST < DISTANCE of MY Taxi");
 
 
                     // OK because my Taxi is farest than taxi of request
@@ -98,16 +86,14 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                             .build();
 
                 } else if (distanzeOfTaxiRequest == distanzeOfMyTaxi) {
-                    System.out.println("Distance of taxi request ====== distanzeOfMyTaxi");
-
+                    System.out.println("DISTANCE of Taxi REQUEST === DISTANCE of MY Taxi");
 
                     // equal distances
-
                     int batteryLevelOfTaxiRequest = request.getBatteryLevel();
                     int batteryLevelOfMyTaxi = TaxiIstance.getInstance().getMyTaxi().getBatteryLevel();
 
                     if (batteryLevelOfTaxiRequest > batteryLevelOfMyTaxi) {
-                        System.out.println("batteria taxi request migliore della mia");
+                        System.out.println("BATTERY level of Taxi REQUEST is BETTER than BATTERY of MY Taxi");
 
                         // OK because Taxi request batteryLeval is much than my batteryLevel
 
@@ -121,17 +107,14 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                                 .build();
 
                     } else if (batteryLevelOfTaxiRequest == batteryLevelOfMyTaxi) {
-                        System.out.println("batteria ========");
-
-
+                        System.out.println("BATTERY level of Taxi REQUEST === BATTERY of MY Taxi");
 
                         // equal batteryLevel, continue checking with IdTaxi
                         // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
 
                         if (request.getIdTaxi() > TaxiIstance.getInstance().getMyTaxi().getId()) {
-                            System.out.println("id request: " + request.getIdTaxi());
-                            System.out.println("id mio: " + TaxiIstance.getInstance().getMyTaxi().getId());
-
+                            System.out.println("idTaxi request: " + request.getIdTaxi());
+                            System.out.println("idTaxi MY: " + TaxiIstance.getInstance().getMyTaxi().getId());
 
                             response = GrpcServiceOuterClass.RideElectionResponse
                                     .newBuilder()
@@ -149,8 +132,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                                     .build();
                         }
                     } else {
-                        System.out.println("batteria mia migliore");
-
+                        System.out.println("BATTERY level of MY Taxi is BETTER than BATTERY of Taxi request");
 
                         // NO because my batteryLevel is >
                         response = GrpcServiceOuterClass.RideElectionResponse
@@ -162,7 +144,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                     }
                 } else {
 
-                    System.out.println("mia distanza è migliore rispetto all'altra");
+                    System.out.println("DISTANCE of Taxi REQUEST > DISTANCE of MY Taxi");
 
                     // my distance is better
                     response = GrpcServiceOuterClass.RideElectionResponse
@@ -176,20 +158,18 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                 // OK because Taxi is busy in a ride or is in recharging
                 // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
 
-                System.out.println("NON PARTECIPO ELEZIONE");
+                System.out.println("I DON'T PARTECIPATE in ELECTION");
 
-                System.out.println("TaxiIstance.getInstance().isInCharge()" + TaxiIstance.getInstance().isInCharge());
-                System.out.println("TaxiIstance.getInstance().isInRide()" + TaxiIstance.getInstance().isInRide());
-                System.out.println("TaxiIstance.getInstance().isInElection()" + TaxiIstance.getInstance().isInElection());
+                System.out.println(".isInCharge() " + TaxiIstance.getInstance().isInCharge());
+                System.out.println(".isInRide() " + TaxiIstance.getInstance().isInRide());
+                System.out.println(".isInElection() " + TaxiIstance.getInstance().isInElection());
 
-                System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
-
-                System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
-                System.out.println("request.idRide" + request.getIdRide());
-
+                // System.out.println("TaxiIstance.getInstance().getIdRideInElection()" + TaxiIstance.getInstance().getIdRideInElection());
+                // System.out.println("TaxiIstance.getInstance().getIdRideOnRoad()" + TaxiIstance.getInstance().getIdRideOnRoad());
+                // System.out.println("request.idRide" + request.getIdRide());
 
                 if (TaxiIstance.getInstance().getIdRideOnRoad() == request.getIdRide()) {
-                    System.out.println("Sto già gestendo io la corsa");
+                    System.out.println("I'm MANAGING RIDE yet");
 
                     response = GrpcServiceOuterClass.RideElectionResponse
                             .newBuilder()
@@ -198,7 +178,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                             .setMessageElection("NO")
                             .build();
                 } else {
-                    System.out.println("NON Sto già gestendo io la corsa");
+                    System.out.println("I'm NOT MANAGING RIDE");
                     response = GrpcServiceOuterClass.RideElectionResponse
                             .newBuilder()
                             .setIdRide(request.getIdRide())
@@ -210,7 +190,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
         } else {
             // OK because startPosition is in another district
 
-            System.out.println("NON SONO NELLO STESSO DISTRETTO");
+            System.out.println("I'm NOT in the SAME district");
 
             // System.out.println("📍 ELECTION for ride " + request.getIdRide() + " WON by Taxi " + request.getIdTaxi());
 
@@ -258,9 +238,9 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
         GrpcServiceOuterClass.ReplyRechargeTaxiResponse response = null;
 
         if (TaxiIstance.getInstance().getMyTaxi().getPosition().getDistrictByPosition() == positionOfTaxiAfterRide.getDistrictByPosition()) {
-
             if (TaxiIstance.getInstance().getInCharge() == TaxiIstance.RechargeStatus.BATTERY_REQUESTED) {
-                // controllo il tempo
+
+                // compare actualTime with Timestamp request
 
                 if (actualTime < timestampRequest) {
                     synchronized (TaxiIstance.getInstance().getRechargeLock()) {
@@ -281,7 +261,6 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                             .setMessageResponse("OK")
                             .build();
                 }
-
             } else if (TaxiIstance.getInstance().getInCharge() == TaxiIstance.RechargeStatus.BATTERY_IN_USED) {
                 synchronized (TaxiIstance.getInstance().getRechargeLock()) {
                     try {
@@ -311,9 +290,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
                     .build();
         }
 
-
         responseObserver.onNext(response);
         responseObserver.onCompleted();
-
     }
 }

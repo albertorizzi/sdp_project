@@ -42,7 +42,6 @@ message TaxiInfoAfterRideResponse {
   string messageResponse = 2;
 }
 
-
 message SendRechargeTaxiRequest {
   Position rechargeStation = 1;
   int32 idTaxi = 2;
@@ -52,9 +51,18 @@ message ReplyRechargeTaxiResponse {
   string messageResponse = 1;
 }
 
+message SendExitTaxiRequest {
+  int32 idTaxi = 1;
+}
+
+message ReplyExitTaxiResponse {
+  string messageResponse = 1;
+}
+
 service GrpcService {
   rpc greeting(HelloRequest) returns (HelloResponse);
   rpc election(RideElectionRequest) returns (RideElectionResponse);
   rpc notifyTaxisAfterRide(TaxiInfoAfterRideRequest) returns (TaxiInfoAfterRideResponse);
   rpc recharge(SendRechargeTaxiRequest) returns (ReplyRechargeTaxiResponse);
+  rpc notifyExit(SendExitTaxiRequest) returns (ReplyExitTaxiResponse);
 }

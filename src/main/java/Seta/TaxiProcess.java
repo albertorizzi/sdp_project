@@ -471,7 +471,35 @@ public class TaxiProcess {
         taxiPubSub.disconnectClient();
 
         // notify the other taxis of the smart city
+        ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();
 
+        for (Taxi taxi : taxiList) {
+            if (taxi.getId() != TaxiIstance.getInstance().getMyTaxi().getId()) {
+
+                //opening a connection with the taxi's server
+                final ManagedChannel channel = ManagedChannelBuilder
+                        .forTarget(taxi.getAddressServerAdministrator() + ":" + taxi.getPortNumber())
+                        .usePlaintext()
+                        .build();
+
+                GrpcServiceGrpc.GrpcServiceBlockingStub stub = GrpcServiceGrpc.newBlockingStub(channel);
+
+                GrpcServiceOuterClass.SendExitTaxiRequest request = GrpcServiceOuterClass.SendExitTaxiRequest
+                        .newBuilder()
+                        .setIdTaxi(TaxiIstance.getInstance().getMyTaxi().getId())
+                        .build();
+
+                GrpcServiceOuterClass.ReplyExitTaxiResponse response;
+                try {
+                    response = stub.notifyExit(request);
+                } catch (Exception e) {
+                    // System.out.println("ERRORE: " + e.getMessage());
+                    System.out.println("⚠️ TaxiProcess.sendExit - I can't contaxt Taxi with ID " + taxi.getId());
+                    TaxiIstance.getInstance().removeTaxi(taxi);
+                }
+                channel.shutdownNow();
+            }
+        }
 
 
         // Send stats to REST server

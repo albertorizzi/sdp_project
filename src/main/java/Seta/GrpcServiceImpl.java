@@ -293,4 +293,27 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void notifyExit(GrpcServiceOuterClass.SendExitTaxiRequest request, StreamObserver<GrpcServiceOuterClass.ReplyExitTaxiResponse> responseObserver) {
+
+        int idTaxiExit = request.getIdTaxi();
+
+        System.out.println("\n" + "🗑🚖 Request TO EXIT from Taxi with ID: " + idTaxiExit);
+
+        Taxi taxiToRemove = TaxiIstance.getInstance().getTaxiByID(idTaxiExit);
+
+        if (taxiToRemove != null) {
+            TaxiIstance.getInstance().removeTaxi(taxiToRemove);
+        }
+
+        GrpcServiceOuterClass.ReplyExitTaxiResponse response = null;
+        response = GrpcServiceOuterClass.ReplyExitTaxiResponse
+                .newBuilder()
+                .setMessageResponse("OK")
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }

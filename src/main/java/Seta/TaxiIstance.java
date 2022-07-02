@@ -71,8 +71,6 @@ public class TaxiIstance {
             taxiList.remove(taxi);
             taxiList.notify();
         }
-
-        System.out.println(taxiList);
     }
 
     public void addAverageListPollutionMeasure(Measurement pm10) {
@@ -107,6 +105,12 @@ public class TaxiIstance {
         Taxi taxi = taxiList.stream().filter(t ->
                 t.getId() == taxiId).findFirst().orElse(null);
         return taxi.getPosition();
+    }
+
+    public Taxi getTaxiByID(int taxiId) {
+        Taxi taxi = taxiList.stream().filter(t ->
+                t.getId() == taxiId).findFirst().orElse(null);
+        return taxi;
     }
 
     public void updateSingleTaxi(int taxiId, Position position, int batteryLevel) {

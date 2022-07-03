@@ -210,7 +210,6 @@ public class TaxiPubSub extends Thread {
         TaxiIstance.getInstance().setInRide(true);
         TaxiIstance.getInstance().setIdRideOnRoad(ride.getIDRide());
 
-
         // notify that I'm not in election anymore
         synchronized (TaxiIstance.getInstance().getElectionLock()) {
             TaxiIstance.getInstance().setInElection(false);
@@ -235,10 +234,14 @@ public class TaxiPubSub extends Thread {
         final int percentageBatteryUsedForKm = 1;
         int updateBatteryLevel = TaxiIstance.getInstance().getMyTaxi().getBatteryLevel() - kmRide * percentageBatteryUsedForKm;
 
+        System.out.println("🗺 KM Ride: " + kmRide);
+        System.out.println("🪫 BATTERY level: " + updateBatteryLevel);
+
         Position newTaxiPosition = ride.getDestinationPosition();
 
         // check if batteries is < 30 %
         if (updateBatteryLevel < 30) {
+            System.out.println("⚡️ RECHARGE request: batteryLevel < 30%");
             TaxiIstance.getInstance().setInCharge(TaxiIstance.RechargeStatus.BATTERY_REQUESTED);
 
             ArrayList<Taxi> taxiList = TaxiIstance.getInstance().getTaxiList();

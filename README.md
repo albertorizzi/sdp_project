@@ -25,4 +25,4 @@ system.
     <img src="assets/smart-city-rep.png" alt="Image" width="500"/>
 </p>
 
-Project develop in the course of Distributed and Pervasive Computing of M.Sc. Computer Scienze UNIMI.
+Project developed in the course of Distributed and Pervasive Computing of M.Sc. Computer Scienze UNIMI.

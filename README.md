@@ -1,10 +1,12 @@
 # SETA project - Alberto Rizzi
 
+Project developed in the course of Distributed and Pervasive Computing of M.Sc. Computer Scienze UNIMI.
+
 The goal of the project is to develop SETA (SElf-driving TAxi service), a peer-to-peer system of self-driving taxis for
 the citizens of a smart city.
 
 <p align="center">
-    <img src="assets/seta.png" alt="Image" width="300"/>
+    <img src="assets/seta.png" alt="seta" width="300"/>
 </p>
 
 The smart city is divided into four districts. The citizens of the smart city use SETA to request a self- driving taxi
@@ -22,7 +24,11 @@ Furthermore, through the Administrator Server it is also possible to dynamically
 system.
 
 <p align="center">
-    <img src="assets/smart-city-rep.png" alt="Image" width="500"/>
+    <img src="assets/smart-city-rep.png" alt="smart city representation" width="500"/>
 </p>
 
-Project developed in the course of Distributed and Pervasive Computing of M.Sc. Computer Scienze UNIMI.
+A simple schema that describe the implementation of requirements.
+
+<p align="center">
+    <img src="assets/schema-low.jpg" alt="Schema of the implementations"/>
+</p>

@@ -54,7 +54,7 @@ public class QueueManager extends Thread {
 
             client.setCallback(new MqttCallback() {
                 // seta/smartcity/ride/accomplished/#
-                // seta/smartcity/ride/free/#
+                // seta/smartcity/taxi/free/#
 
                 // messageArrived: reception of message of specific topic on this there's a subscription
                 public void messageArrived(String topic, MqttMessage message) throws JSONException, MqttException {
